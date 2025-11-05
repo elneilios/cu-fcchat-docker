@@ -1,0 +1,4 @@
+-- Placeholder/example for phpBB DB dump
+-- Copy your real SQL dump to db_init/001_phpbb_backup.sql (this real file is ignored by git)
+
+-- Example: your dump should contain CREATE TABLE / INSERT statements for the phpbb database
