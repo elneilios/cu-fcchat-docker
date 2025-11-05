@@ -1,0 +1,2 @@
+phpbb/colu/installf/schemas/*.sql !text !filter !merge !diff
+phpbb/installf/schemas/*.sql !text !filter !merge !diff
