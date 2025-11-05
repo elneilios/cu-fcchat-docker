@@ -1,0 +1,37 @@
+services:
+  phpbb:
+    build: .
+    container_name: phpbb
+    ports:
+      - "8080:80"
+    volumes:
+      - ./phpbb:/var/www/html                      # phpBB source
+      - ./docker-overrides/config.php:/var/www/html/config.php # Local config settings override to connect to Docker database
+      - phpbb_data_uploads:/var/www/html/files     # uploads (persistent)
+      - phpbb_data_cache:/var/www/html/cache       # cache (persistent)
+      - phpbb_data_sessions:/var/www/html/store    # sessions/temp files
+    depends_on:
+      - db
+    environment:
+      APACHE_SERVER_NAME: localhost
+      APACHE_SERVER_PORT: 8080
+    entrypoint: ["/usr/local/bin/docker-entrypoint.sh"]
+    command: ["apache2-foreground"]
+
+  db:
+    image: mariadb:10.5
+    container_name: phpbb-db
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: phpbb
+      MYSQL_USER: phpbbuser
+      MYSQL_PASSWORD: phpbbpass
+    volumes:
+      - ./db_init:/docker-entrypoint-initdb.d
+      - phpbb_db_data:/var/lib/mysql
+
+volumes:
+  phpbb_data_uploads:
+  phpbb_data_cache:
+  phpbb_data_sessions:
+  phpbb_db_data:
