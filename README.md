@@ -62,7 +62,6 @@ Backups are saved under `backups/` (this folder is ignored by git). Test restore
 1. Take a snapshot (DB + files).
 2. Update `phpbb/` code or mount a test copy.
  
-Use a dedicated git branch for each upgrade (for example `feature/upgrade-phpbb`) so changes are isolated and easy to revert.
 3. Run phpBB upgrade steps (ACP or CLI) and verify functionality.
 4. Test thoroughly (logins, posts, extensions, themes). If rollback needed, restore the snapshot.
 
