@@ -24,6 +24,7 @@ docker compose version   # or: docker-compose --version
 
 1. Copy the live server's phpBB site files into this repo's `phpbb/` folder (FTP/SFTP; copy `/var/www/html`).
 2. Export a SQL backup from the live server (phpMyAdmin or export tool) and place the `.sql` file at `db_init/001_phpbb_backup.sql`.
+  A placeholder example `db_init/001_phpbb_backup.sql.example` is included — copy your real dump to `db_init/001_phpbb_backup.sql` (the real file is ignored by git).
 3. Build and run the stack from the repo root:
 
 ```pwsh
