@@ -7,3 +7,6 @@
 
 # Note: If files under `phpbb/` are already tracked by git, they will remain tracked
 # until you remove them from the index (e.g. `git rm --cached -r phpbb`), then commit.
+
+# Ignore large DB dump used locally; keep smaller db_init scripts tracked
+/db_init/001_phpbb_backup.sql
