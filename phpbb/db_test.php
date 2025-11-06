@@ -49,25 +49,26 @@ if (!$connection) {
 // Test 3: MySQL connection
 echo "<h3>Test 3: MySQL Connection</h3>";
 $mysqli = mysqli_init();
-$mysqli->options(MYSQLI_INIT_COMMAND, "SET NAMES utf8");
-$mysqli->options(MYSQLI_SET_CHARSET_NAME, "utf8");
-$mysqli->real_connect($dbhost, $dbuser, $dbpasswd, $dbname, $dbport);
-
-if ($mysqli->connect_error) {
-    echo "<span style='color:red'>⚠️ Connection failed: " . $mysqli->connect_error . "</span><br>";
-    echo "Error code: " . $mysqli->connect_errno . "<br>";
-} else {
-    echo "<span style='color:green'>✓ MySQL connection successful!</span><br>";
+if ($mysqli) {
+    @mysqli_options($mysqli, MYSQLI_OPT_CONNECT_TIMEOUT, 10);
+    @mysqli_real_connect($mysqli, $dbhost, $dbuser, $dbpasswd, $dbname, $dbport, null, MYSQLI_CLIENT_FOUND_ROWS);
+    if ($mysqli->connect_error) {
+        echo "<span style='color:red'>⚠️ Connection failed: " . $mysqli->connect_error . "</span><br>";
+        echo "Error code: " . $mysqli->connect_errno . "<br>";
+    } else {
+        // Set charset after connection
+        @mysqli_set_charset($mysqli, 'utf8');
+        echo "<span style='color:green'>✓ MySQL connection successful!</span><br>";
     
-    // Test query
-    $result = $mysqli->query("SELECT COUNT(*) as user_count FROM phpbb_users");
-    if ($result) {
-        $row = $result->fetch_assoc();
-        echo "<p><strong>Users in database:</strong> " . $row['user_count'] . "</p>";
+        // Test query
+        $result = $mysqli->query("SELECT COUNT(*) as user_count FROM phpbb_users");
+        if ($result) {
+            $row = $result->fetch_assoc();
+            echo "<p><strong>Users in database:</strong> " . $row['user_count'] . "</p>";
+        }
+        
+        $mysqli->close();
     }
-    
-    $mysqli->close();
-}
 }
 
 echo "<hr><h3>Summary</h3>";
