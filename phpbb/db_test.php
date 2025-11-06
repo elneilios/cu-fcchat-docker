@@ -5,17 +5,26 @@ ini_set('display_errors', 1);
 
 echo "<h2>Database Connection Test</h2>";
 
-$dbhost = 'switchyard.proxy.rlwy.net';
-$dbport = '25869';
+// Test both private and public hostnames
+$hosts_to_test = [
+    'Private (mysql.railway.internal)' => ['host' => 'mysql.railway.internal', 'port' => '3306'],
+    'Public (switchyard.proxy.rlwy.net)' => ['host' => 'switchyard.proxy.rlwy.net', 'port' => '25869']
+];
+
 $dbname = 'railway';
 $dbuser = 'root';
 $dbpasswd = 'lAjbGuLDXxSMsZbgSHGIGpcGBlzUiCSm';
 
-echo "<p><strong>Attempting to connect to:</strong><br>";
-echo "Host: $dbhost<br>";
-echo "Port: $dbport<br>";
-echo "Database: $dbname<br>";
-echo "User: $dbuser</p>";
+foreach ($hosts_to_test as $test_name => $config) {
+    $dbhost = $config['host'];
+    $dbport = $config['port'];
+    
+    echo "<hr><h2>Testing: $test_name</h2>";
+    echo "<p><strong>Connection details:</strong><br>";
+    echo "Host: $dbhost<br>";
+    echo "Port: $dbport<br>";
+    echo "Database: $dbname<br>";
+    echo "User: $dbuser</p>";
 
 // Test 1: DNS resolution
 echo "<h3>Test 1: DNS Resolution</h3>";
@@ -59,6 +68,9 @@ if ($mysqli->connect_error) {
     
     $mysqli->close();
 }
+}
 
-echo "<hr><p><em>Test completed at " . date('Y-m-d H:i:s') . "</em></p>";
+echo "<hr><h3>Summary</h3>";
+echo "<p>If private networking works, update config.php to use mysql.railway.internal:3306 for better performance.</p>";
+echo "<p><em>Test completed at " . date('Y-m-d H:i:s') . "</em></p>";
 ?>
