@@ -7,8 +7,8 @@ echo "<h2>Database Connection Test</h2>";
 
 // Test both private and public hostnames
 $hosts_to_test = [
-    'Private (discerning-smile.railway.internal)' => ['host' => 'discerning-smile.railway.internal', 'port' => '3306'],
-    'Public (shortline.proxy.rlwy.net)' => ['host' => 'shortline.proxy.rlwy.net', 'port' => '53550']
+    'Private (cu-fcchat-docker.railway.internal)' => ['host' => 'cu-fcchat-docker.railway.internal', 'port' => '3306'],
+    'Public (switchyard.proxy.rlwy.net)' => ['host' => 'switchyard.proxy.rlwy.net', 'port' => '47277']
 ];
 
 $dbname = 'railway';
@@ -48,29 +48,22 @@ if (!$connection) {
 
 // Test 3: MySQL connection
 echo "<h3>Test 3: MySQL Connection</h3>";
-$mysqli = mysqli_init();
-if ($mysqli) {
-    @mysqli_options($mysqli, MYSQLI_OPT_CONNECT_TIMEOUT, 10);
-    // Connect without database to avoid charset handshake issue
-    $connect_result = @mysqli_real_connect($mysqli, $dbhost, $dbuser, $dbpasswd, '', $dbport);
-    if (!$connect_result || $mysqli->connect_error) {
-        echo "<span style='color:red'>⚠️ Connection failed: " . $mysqli->connect_error . "</span><br>";
-        echo "Error code: " . $mysqli->connect_errno . "<br>";
-    } else {
-        // Select database and set charset after connection
-        @mysqli_select_db($mysqli, $dbname);
-        @mysqli_query($mysqli, "SET NAMES 'utf8'");
-        echo "<span style='color:green'>✓ MySQL connection successful!</span><br>";
+$mysqli = new mysqli($dbhost, $dbuser, $dbpasswd, $dbname, $dbport);
+
+if ($mysqli->connect_error) {
+    echo "<span style='color:red'>⚠️ Connection failed: " . $mysqli->connect_error . "</span><br>";
+    echo "Error code: " . $mysqli->connect_errno . "<br>";
+} else {
+    echo "<span style='color:green'>✓ MySQL connection successful!</span><br>";
     
-        // Test query
-        $result = $mysqli->query("SELECT COUNT(*) as user_count FROM phpbb_users");
-        if ($result) {
-            $row = $result->fetch_assoc();
-            echo "<p><strong>Users in database:</strong> " . $row['user_count'] . "</p>";
-        }
-        
-        $mysqli->close();
+    // Test query
+    $result = $mysqli->query("SELECT COUNT(*) as user_count FROM phpbb_users");
+    if ($result) {
+        $row = $result->fetch_assoc();
+        echo "<p><strong>Users in database:</strong> " . $row['user_count'] . "</p>";
     }
+    
+    $mysqli->close();
 }
 }
 
