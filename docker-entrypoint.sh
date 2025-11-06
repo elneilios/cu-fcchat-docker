@@ -78,7 +78,23 @@ error_log = /var/log/php_errors.log
 
 ; Set default timezone
 date.timezone = Europe/London
+
+; Make environment variables available to PHP
+variables_order = "EGPCS"
 EOL
+
+# ---------------------------
+# 7. Configure Apache to pass environment variables to PHP
+# ---------------------------
+echo "Configuring Apache to pass environment variables..."
+cat <<'EOL' >> /etc/apache2/conf-available/env-vars.conf
+PassEnv DB_HOST
+PassEnv DB_PORT
+PassEnv DB_NAME
+PassEnv DB_USER
+PassEnv DB_PASSWORD
+EOL
+a2enconf env-vars 2>/dev/null || true
 
 # ---------------------------
 # 7. Start Apache
