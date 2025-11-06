@@ -19,7 +19,8 @@ RUN sed -i 's|http://deb.debian.org/debian|http://archive.debian.org/debian|g' /
     && docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/ \
     && docker-php-ext-install gd mysqli mbstring intl zip xml \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && php -m | grep -q 'zip' || (echo "ZIP extension not loaded" && exit 1)
 
 # Copy phpBB forum files
 COPY ./phpbb /var/www/html/

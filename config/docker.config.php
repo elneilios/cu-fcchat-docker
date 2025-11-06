@@ -1,8 +1,7 @@
 <?php
-// phpBB 3.0.x auto-generated configuration file
-// Do not change anything in this file!
+// phpBB 3.0.x Docker-specific configuration file
 $dbms = 'mysqli';
-$dbhost = 'db';           // <-- Docker service name
+$dbhost = 'db';           // Docker service name
 $dbport = '3306';
 $dbname = 'phpbb';
 $dbuser = 'phpbbuser';

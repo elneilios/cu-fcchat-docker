@@ -4,6 +4,16 @@ set -e
 PHPBB_DIR="/var/www/html"
 
 # ---------------------------
+# 0. Handle config.php
+# ---------------------------
+if [ -f "/config/docker.config.php" ]; then
+    echo "Copying Docker-specific config.php..."
+    cp /config/docker.config.php "$PHPBB_DIR/config.php"
+    chown www-data:www-data "$PHPBB_DIR/config.php"
+    chmod 644 "$PHPBB_DIR/config.php"
+fi
+
+# ---------------------------
 # 1. Fix permissions for writable directories
 # ---------------------------
 for dir in cache files store images/avatars/upload; do
