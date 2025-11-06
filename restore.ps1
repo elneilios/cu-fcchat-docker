@@ -1,3 +1,7 @@
+param(
+    [string] $SnapshotFolder
+)
+
 # restore.ps1 - Restore phpBB snapshot
 
 $ErrorActionPreference = "Stop"
@@ -18,18 +22,24 @@ if ($backupFolders.Count -eq 0) {
     exit 1
 }
 
-Write-Host "Available snapshots:"
-for ($i = 0; $i -lt $backupFolders.Count; $i++) {
-    Write-Host "[$($i+1)] $($backupFolders[$i])"
+if ([string]::IsNullOrWhiteSpace($SnapshotFolder)) {
+    Write-Host "Available snapshots:"
+    for ($i = 0; $i -lt $backupFolders.Count; $i++) {
+        Write-Host "[$($i+1)] $($backupFolders[$i])"
+    }
+    $selection = Read-Host "Select a snapshot by number (1-$($backupFolders.Count))"
+    if ($selection -notmatch '^[1-9][0-9]*$' -or [int]$selection -lt 1 -or [int]$selection -gt $backupFolders.Count) {
+        Write-Host "❌ Invalid selection." -ForegroundColor Red
+        exit 1
+    }
+    $SnapshotFolder = $backupFolders[[int]$selection-1]
+} else {
+    if (-not ($backupFolders -contains $SnapshotFolder)) {
+        Write-Host "❌ Snapshot folder not found: $SnapshotFolder" -ForegroundColor Red
+        Write-Host "Available: $($backupFolders -join ', ')"
+        exit 1
+    }
 }
-
-$selection = Read-Host "Select a snapshot by number (1-$($backupFolders.Count))"
-if ($selection -notmatch '^[1-9][0-9]*$' -or [int]$selection -lt 1 -or [int]$selection -gt $backupFolders.Count) {
-    Write-Host "❌ Invalid selection." -ForegroundColor Red
-    exit 1
-}
-
-$SnapshotFolder = $backupFolders[[int]$selection-1]
 $backupDir = Join-Path $backupsFolder $SnapshotFolder
 Write-Host "Selected: $SnapshotFolder`n"
 
