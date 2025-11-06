@@ -1,9 +1,5 @@
-# Ignore all contents under backups and phpbb but keep placeholder files
+# Ignore backups folder contents but keep placeholder files
 /backups/**
 !/backups/.gitkeep
 
 # Large database backup files are tracked via Git LFS (see .gitattributes)
-
-# Ignore phpbb directory contents (installed files)
-/phpbb/**
-!/phpbb/.gitkeep
