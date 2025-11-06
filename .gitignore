@@ -1,3 +1,10 @@
 # Ignore all contents under backups and phpbb but keep placeholder files
 /backups/**
 !/backups/.gitkeep
+
+# Ignore large database backup files (keep only example files)
+/db_init/001_phpbb_backup.sql
+
+# Ignore phpbb directory contents (installed files)
+/phpbb/**
+!/phpbb/.gitkeep
