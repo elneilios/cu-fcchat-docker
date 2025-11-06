@@ -1,0 +1,35 @@
+@import url("../../prosilver/theme/stylesheet.css");
+/* Load this style's colour overrides after prosilver */
+@import url("colours.css");
+
+/* Map site-specific variables to brand palette for consistency */
+:root {
+    --cu-blue-dark: var(--brand-primary);
+    --cu-blue-light: var(--brand-primary-light);
+}
+
+/* === Body background === */
+html, body {
+    background-image: url("./images/background.png");
+    background-repeat: no-repeat;
+    background-attachment: fixed; /* keeps the image static */
+    background-position: center top;
+    background-size: cover; /* scales nicely to fit all screens */
+}
+
+/* === Custom site logo === */
+.site_logo {
+    background-image: url("./images/logo.png");
+}
+
+/* === Header banner height adjustment for custom logo === */
+.headerbar {
+    min-height: 100px; /* adjust this value to fit your logo height */
+}
+
+.site_logo {
+    height: 80px; /* adjust to your logo height */
+    background-size: contain; /* ensures logo scales properly */
+    background-position: center;
+    background-repeat: no-repeat; /* prevents logo from repeating */
+}

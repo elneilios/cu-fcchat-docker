@@ -1,0 +1,114 @@
+<div class="navbar" role="navigation">
+	<div class="inner">
+
+	<ul id="nav-footer" class="nav-footer linklist" role="menubar">
+		<li class="breadcrumbs">
+			<!-- IF U_SITE_HOME -->
+				{% spaceless %}
+				<span class="crumb">
+					<a href="{U_SITE_HOME}" data-navbar-reference="home">
+						<i class="icon fa-home fa-fw" aria-hidden="true"></i><span>{L_SITE_HOME}</span>
+					</a>
+				</span>
+				{% endspaceless %}
+			<!-- ENDIF -->
+			<!-- EVENT overall_footer_breadcrumb_prepend -->
+			{% spaceless %}
+			<span class="crumb">
+				<a href="{U_INDEX}" data-navbar-reference="index">
+					<!-- IF not U_SITE_HOME --><i class="icon fa-home fa-fw" aria-hidden="true"></i><!-- ENDIF --><span>{L_INDEX}</span>
+				</a>
+			</span>
+			{% endspaceless %}
+			<!-- EVENT overall_footer_breadcrumb_append -->
+		</li>
+		<!-- IF U_WATCH_FORUM_LINK and not S_IS_BOT -->
+			<li data-last-responsive="true">
+				<a href="{U_WATCH_FORUM_LINK}" title="{S_WATCH_FORUM_TITLE}" data-ajax="toggle_link" data-toggle-class="icon <!-- IF S_WATCHING_FORUM -->fa-check-square-o<!-- ELSE -->fa-square-o<!-- ENDIF --> fa-fw" data-toggle-text="{S_WATCH_FORUM_TOGGLE}" data-toggle-url="{U_WATCH_FORUM_TOGGLE}">
+					<i class="icon <!-- IF S_WATCHING_FORUM -->fa-square-o<!-- ELSE -->fa-check-square-o<!-- ENDIF --> fa-fw" aria-hidden="true"></i><span>{S_WATCH_FORUM_TITLE}</span>
+				</a>
+			</li>
+		<!-- ENDIF -->
+
+		<!-- EVENT overall_footer_timezone_before -->
+		<li class="rightside dropdown-container timezone times" title="{LAST_VISIT_DATE} &bull; {CURRENT_TIME}" data-skip-responsive="true">
+			<a href="#" class="dropdown-trigger">
+			<i class="icon fa-globe fa-fw" aria-hidden="true"></i>
+			</a>
+			<div class="dropdown">
+			<div class="pointer"><div class="pointer-inner"></div></div>
+				<div class="dropdown-contents">
+					<p class="{S_CONTENT_FLOW_END} responsive-center time<!-- IF S_USER_LOGGED_IN --> rightside<!-- ENDIF -->"><!-- IF S_USER_LOGGED_IN -->{LAST_VISIT_DATE}<!-- ELSE -->{CURRENT_TIME}<!-- ENDIF --></p>
+					<!-- IF S_USER_LOGGED_IN --><p class="responsive-center time">{CURRENT_TIME}</p><!-- ENDIF -->
+					{S_TIMEZONE}
+				</div>
+			</div>			
+		</li>
+		<!-- EVENT overall_footer_timezone_after -->
+		<!-- IF not S_IS_BOT -->
+			<li class="rightside">
+				<a href="{U_DELETE_COOKIES}" data-ajax="true" data-refresh="true" role="menuitem">
+					<i class="icon fa-trash fa-fw" aria-hidden="true"></i><span>{L_DELETE_COOKIES}</span>
+				</a>
+			</li>
+		<!-- IF S_DISPLAY_MEMBERLIST -->
+			<li class="rightside" data-last-responsive="true">
+				<a href="{U_MEMBERLIST}" title="{L_MEMBERLIST_EXPLAIN}" role="menuitem">
+					<i class="icon fa-group fa-fw" aria-hidden="true"></i><span>{L_MEMBERLIST}</span>
+				</a>
+			</li>
+			<!-- ENDIF -->
+		<!-- ENDIF -->
+		<!-- EVENT overall_footer_teamlink_before -->
+		<!-- IF U_TEAM -->
+			<li class="rightside" data-last-responsive="true">
+				<a href="{U_TEAM}" role="menuitem">
+					<i class="icon fa-shield fa-fw" aria-hidden="true"></i><span>{L_THE_TEAM}</span>
+				</a>
+			</li>
+		<!-- ENDIF -->
+		<!-- EVENT overall_footer_teamlink_after -->
+		<!-- IF U_CONTACT_US -->
+			<li class="rightside" data-last-responsive="true">
+				<a href="{U_CONTACT_US}" role="menuitem">
+					<i class="icon fa-envelope fa-fw" aria-hidden="true"></i><span>{L_CONTACT_US}</span>
+				</a>
+			</li>
+		<!-- ENDIF -->
+	</ul>
+
+	</div>
+	<div class="copyright">
+		<!-- EVENT overall_footer_copyright_prepend -->
+		<br><strong><span>*</span>CleanSilver style by <a href="https://twitter.com/MannixMD">MannixMD</a></strong>
+		<br><strong><span>*</span>Style Version 1.0.8</strong>	
+		<p class="footer-row">
+			<span class="footer-copyright">{{ CREDIT_LINE }}</span>
+		</p>
+		<!-- IF TRANSLATION_INFO -->
+		<p class="footer-row">
+			<span class="footer-copyright">{{ TRANSLATION_INFO }}</span>
+		</p>
+		<!-- ENDIF -->
+		<!-- EVENT overall_footer_copyright_append -->
+		<p class="footer-row" role="menu">
+			<a class="footer-link" href="{{ U_PRIVACY }}" title="{{ lang('PRIVACY_LINK') }}" role="menuitem">
+				<span class="footer-link-text">{{ lang('PRIVACY_LINK') }}</span>
+			</a>
+			|
+			<a class="footer-link" href="{{ U_TERMS_USE }}" title="{{ lang('TERMS_LINK') }}" role="menuitem">
+				<span class="footer-link-text">{{ lang('TERMS_LINK') }}</span>
+			</a>
+		</p>
+		<!-- IF DEBUG_OUTPUT -->
+		<p class="footer-row">
+			<span class="footer-info">{{ DEBUG_OUTPUT }}</span>
+		</p>
+		<!-- ENDIF -->
+		<!-- IF U_ACP -->
+		<p class="footer-row">
+			<a class="footer-link text-strong" href="{{ U_ACP }}">{{ lang('ACP') }}</a>
+		</p>
+		<!-- ENDIF -->
+	</div>
+</div>
