@@ -2,8 +2,8 @@
 // phpBB 3.0.x configuration file for Railway deployment
 
 $dbms = 'mysqli';
-$dbhost = 'mysql.railway.internal';
-$dbport = '3306';
+$dbhost = 'switchyard.proxy.rlwy.net';
+$dbport = '25869';
 $dbname = 'railway';
 $dbuser = 'root';
 $dbpasswd = 'lAjbGuLDXxSMsZbgSHGIGpcGBlzUiCSm';
