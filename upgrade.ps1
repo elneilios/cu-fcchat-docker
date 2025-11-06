@@ -101,11 +101,16 @@ cp phpBB_backup/config.php .
 
 # --- 5. Prompt for manual DB upgrade ---
 Write-Host "`n======================================"
-Write-Host "🧩 Step 1: Manual database upgrade"
-Write-Host "In your browser, visit:"
-Write-Host "   http://localhost:8080/install/database_update.php"
-Write-Host "Run until you see 'Update completed', then return here."
-Read-Host "Press Enter when done"
+Write-Host "🧩 Manual database upgrade required"
+Write-Host ""
+Write-Host "In your browser, visit ONE of these URLs:"
+Write-Host "   For phpBB 3.1+:  http://localhost:8080/install/"
+Write-Host "   For phpBB 3.0:   http://localhost:8080/install/database_update.php"
+Write-Host ""
+Write-Host "Follow the on-screen instructions until you see 'Update completed'."
+Write-Host "Then return here and press Enter to continue cleanup."
+Write-Host ""
+Read-Host "Press Enter when database upgrade is complete"
 
 # --- 6. Post-upgrade tasks ---
 Write-Host "`n🚀 Restoring backed-up folders and cleaning up..."
