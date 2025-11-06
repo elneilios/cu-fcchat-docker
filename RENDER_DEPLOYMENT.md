@@ -7,40 +7,54 @@ This guide explains how to deploy your phpBB forum to Render.
 - GitHub repository with your code (✅ Done)
 - Render account
 
-## Step 1: Create a MySQL Database on Render
+## Step 1: Create a Database
 
-1. Go to https://dashboard.render.com
-2. Click **New +** → **MySQL**
-3. Configure:
-   - **Name**: `phpbb-database`
-   - **Database**: `phpbb`
-   - **User**: `phpbbuser`
-   - **Region**: Choose closest to your users
-   - **Plan**: Choose appropriate plan (Free tier available)
-4. Click **Create Database**
-5. **Important**: Copy the connection details (you'll need them):
-   - Internal Database URL (for use within Render)
-   - External Database URL (if needed)
-   - Host, Port, Username, Password
+**Render only offers PostgreSQL**, not MySQL. You have two options:
+
+### Option A: Use an External MySQL Provider (Recommended for phpBB)
+
+Since phpBB works best with MySQL/MariaDB, use an external provider:
+
+**1. PlanetScale (Free tier available)**
+   - Go to https://planetscale.com
+   - Create a free database
+   - Get connection details (host, username, password, database name)
+   - Use the external hostname in your Render environment variables
+
+**2. AWS RDS MySQL (Paid)**
+   - Create a MySQL instance on AWS RDS
+   - Use the endpoint as DB_HOST
+
+**3. Railway (Supports MySQL)**
+   - Railway.app offers MySQL databases
+   - May be easier for full docker-compose deployment
+
+### Option B: Migrate to PostgreSQL (Requires Work)
+
+If you want to use Render's PostgreSQL:
+1. Click **New +** → **PostgreSQL**
+2. You'll need to convert your MySQL database to PostgreSQL
+3. Modify phpBB to use PostgreSQL driver (`phpbb_db_driver_postgres`)
+4. This is complex and not recommended unless necessary
 
 ## Step 2: Import Your Database
 
-You need to import your `001_phpbb_backup.sql` file into the Render database.
-
-### Option A: Using Render Shell (Recommended)
-
-1. After database is created, go to the database page
-2. Click **Connect** → **External Connection**
-3. Use the provided credentials with your local MySQL client:
+### If using PlanetScale:
+1. Install PlanetScale CLI or use their web interface
+2. Import your SQL file:
    ```bash
-   mysql -h <hostname> -P <port> -u <user> -p<password> phpbb < db_init/001_phpbb_backup.sql
+   pscale database restore-dump <database> <branch> --dump db_init/001_phpbb_backup.sql
    ```
 
-### Option B: Using phpMyAdmin or MySQL Workbench
+### If using AWS RDS or other MySQL service:
+Use the external connection details to import:
+```bash
+mysql -h <hostname> -P <port> -u <user> -p<password> phpbb < db_init/001_phpbb_backup.sql
+```
 
-1. Use the External Connection details from Render
-2. Connect to the database
-3. Import the SQL file through the GUI
+### If using Railway:
+1. Railway can import the SQL automatically if you include it in your deployment
+2. Or use their database connection URL with MySQL client
 
 ## Step 3: Deploy the Web Service
 
@@ -54,14 +68,16 @@ You need to import your `001_phpbb_backup.sql` file into the Render database.
    - **Runtime**: `Docker`
    - **Plan**: Choose appropriate plan
 
-4. **Environment Variables** - Add these (using values from Step 1):
+4. **Environment Variables** - Add these (using values from your MySQL provider):
    ```
-   DB_HOST=<your-render-database-internal-hostname>
+   DB_HOST=<your-mysql-hostname>
    DB_PORT=3306
    DB_NAME=phpbb
    DB_USER=phpbbuser
    DB_PASSWORD=<your-database-password>
    ```
+   
+   **Important**: Use the **external/public hostname** from your MySQL provider (e.g., PlanetScale, AWS RDS)
 
 5. Click **Create Web Service**
 
@@ -85,9 +101,10 @@ Render will:
 ### Database Connection Issues
 
 If you see "SQL ERROR" or connection errors:
-- Verify all environment variables are set correctly
-- Check that DB_HOST uses the **internal hostname** (e.g., `dpg-xxx-a`)
-- Ensure the database import completed successfully
+- Verify all environment variables are set correctly in Render
+- Check that DB_HOST uses the correct **external/public hostname**
+- Ensure your MySQL provider allows connections from Render's IP addresses
+- For PlanetScale: Make sure SSL/TLS is properly configured
 - Check the Render logs for specific error messages
 
 ### Git LFS Issues
@@ -119,17 +136,31 @@ No configuration changes needed!
 
 ## Cost Estimate
 
-Render pricing (as of 2024):
-- **MySQL Database**: $7-15/month (Starter plan)
-- **Web Service**: $7/month (Starter plan) or free with limitations
-- **Total**: ~$14-22/month for basic deployment
+### Option A: Render + PlanetScale
+- **PlanetScale Database**: Free tier available (1 database, 5GB storage, 1 billion reads/month)
+- **Render Web Service**: $7/month (Starter) or free with limitations
+- **Total**: $0-7/month for basic deployment
 
-## Alternative: Use Docker Compose on Other Platforms
+### Option B: Render + AWS RDS MySQL
+- **AWS RDS MySQL**: ~$15-25/month (t3.micro instance)
+- **Render Web Service**: $7/month (Starter)
+- **Total**: ~$22-32/month
 
-If you need multi-container support (web + database together), consider:
-- **Railway.app** - Supports docker-compose.yml
-- **DigitalOcean App Platform** - Supports multiple services
-- **AWS ECS** - Full docker-compose support
-- **Azure Container Apps** - Multi-container support
+## Better Alternative: Railway
 
-These platforms can deploy your `docker-compose.yml` directly without needing environment variables.
+Since Render doesn't offer MySQL, consider **Railway.app** instead:
+- Supports docker-compose.yml directly
+- Offers MySQL databases natively
+- No need to split database and web service
+- Simpler deployment process
+- Free tier: $5 credit/month
+- Paid: ~$5-10/month for small apps
+
+**To deploy on Railway:**
+1. Push your code to GitHub
+2. Go to https://railway.app
+3. Click "New Project" → "Deploy from GitHub repo"
+4. Select your repository
+5. Railway will detect docker-compose.yml and deploy both services
+6. Add environment variables if needed
+7. Done!
