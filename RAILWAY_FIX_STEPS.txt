@@ -1,0 +1,35 @@
+# Railway Fix - Manual Database Addition
+
+Since Railway only deployed the web service, you need to manually add the MySQL database:
+
+## Steps to Fix:
+
+1. In Railway Dashboard, click on your project
+2. Click 'New' or '+' button 
+3. Select 'Database' 
+4. Choose 'MySQL' (or MariaDB if available)
+5. Railway will create a new MySQL database service
+
+## After Database is Created:
+
+Railway will provide connection variables. You need to add them to your web service:
+
+1. Click on your 'cu-fcchat-docker' service
+2. Go to 'Variables' tab
+3. Add these variables using the values from your new database:
+
+   DB_HOST=<hostname from Railway MySQL service>
+   DB_PORT=3306
+   DB_NAME=railway
+   DB_USER=<user from Railway>
+   DB_PASSWORD=<password from Railway>
+
+## Import Your SQL Data:
+
+Railway's MySQL won't have your phpBB data yet. You'll need to import it:
+
+1. Get database connection details from Railway
+2. Use MySQL client locally to import:
+   mysql -h <railway-host> -P <port> -u <user> -p<password> railway < db_init/001_phpbb_backup.sql
+
+This will take ~5-10 minutes for the 683MB file.
