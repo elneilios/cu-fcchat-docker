@@ -70,6 +70,7 @@ if ($mysqli) {
         $mysqli->close();
     }
 }
+}
 
 echo "<hr><h3>Summary</h3>";
 echo "<p>If private networking works, update config.php to use mysql.railway.internal:3306 for better performance.</p>";
