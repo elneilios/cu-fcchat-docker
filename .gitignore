@@ -1,10 +1,20 @@
-# Ignore all contents under backups and phpbb but keep placeholder files
-/backups/**
-!/backups/.gitkeep
+# Track backups, db_init SQL files, and phpbb code for colleague deployment
+# SQL files tracked via Git LFS (see .gitattributes)
 
-# Ignore large database backup files (keep only example files)
-/db_init/001_phpbb_backup.sql
+# Ignore temporary/cache/session files that shouldn't be in version control
+/phpbb/cache/*
+!/phpbb/cache/.htaccess
+!/phpbb/cache/index.htm
 
-# Ignore phpbb directory contents (installed files)
-/phpbb/**
-!/phpbb/.gitkeep
+/phpbb/store/*
+!/phpbb/store/.htaccess
+!/phpbb/store/index.htm
+
+/phpbb/files/*
+!/phpbb/files/.htaccess
+!/phpbb/files/index.htm
+
+# Ignore generated/runtime files
+/phpbb/config.php
+*.log
+php_errors.log

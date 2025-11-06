@@ -1,0 +1,2 @@
+# Track SQL files with Git LFS for efficient handling of large database dumps
+*.sql filter=lfs diff=lfs merge=lfs -text
