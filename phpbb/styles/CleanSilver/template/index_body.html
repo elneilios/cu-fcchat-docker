@@ -1,0 +1,62 @@
+<!-- INCLUDE overall_header.html -->
+
+
+<!-- EVENT index_body_markforums_before -->
+
+<!-- EVENT index_body_markforums_after -->
+
+<!-- INCLUDE forumlist_body.html -->
+
+<!-- EVENT index_body_forumlist_body_after -->
+
+
+<!-- EVENT index_body_stat_blocks_before -->
+<div class="tabcontentblock">
+	<!-- IF S_DISPLAY_ONLINE_LIST -->
+		<button class="tablink" onclick="openPage('WhoIs', this, '#0076B1','#000')" id="defaultOpen"><i class="icon fa-users fa-fw cat" aria-hidden="true"></i><span>{L_WHO_IS_ONLINE}</span></button>
+	<!-- ENDIF -->
+	<!-- IF S_DISPLAY_BIRTHDAY_LIST -->
+		<button class="tablink" onclick="openPage('B-day', this, '#0076B1','#000')" ><i class="icon fa-birthday-cake fa-fw cat" aria-hidden="true"></i><span>{L_BIRTHDAYS}</span></button>
+	<!-- ENDIF -->
+	<!-- IF NEWEST_USER -->
+		<button class="tablink" onclick="openPage('Stats', this, '#0076B1','#000')"><i class="icon fa-pie-chart fa-fw cat" aria-hidden="true"></i><span>{L_STATISTICS}</span></button>
+	<!-- ENDIF -->
+</div>
+<!-- IF S_DISPLAY_ONLINE_LIST -->
+<div id="WhoIs" class="tabcontent stat-block online-list">
+	<!-- IF U_VIEWONLINE --><h3><a href="{U_VIEWONLINE}">{L_WHO_IS_ONLINE}</a></h3><!-- ELSE --><h3>{L_WHO_IS_ONLINE}</h3><!-- ENDIF -->
+	<p>
+		<!-- EVENT index_body_block_online_prepend -->
+		{TOTAL_USERS_ONLINE} ({L_ONLINE_EXPLAIN})<br />{RECORD_USERS}<br /> 
+		<!-- IF U_VIEWONLINE -->
+		<br />{LOGGED_IN_USER_LIST}
+		<!-- IF LEGEND --><br /><em>{L_LEGEND}{L_COLON} {LEGEND}</em><!-- ENDIF -->
+		<!-- ENDIF -->
+		<!-- EVENT index_body_block_online_append -->
+	</p>
+</div>
+<!-- ENDIF -->
+<!-- EVENT index_body_birthday_block_before -->
+<!-- IF S_DISPLAY_BIRTHDAY_LIST -->
+<div id="B-day" class="tabcontent stat-block birthday-list">
+  <h3>{L_BIRTHDAYS}</h3>
+  <p>
+	<!-- EVENT index_body_block_birthday_prepend -->
+	<!-- IF .birthdays -->{L_CONGRATULATIONS}{L_COLON} <strong><!-- BEGIN birthdays -->{birthdays.USERNAME}<!-- IF birthdays.AGE !== '' --> ({birthdays.AGE})<!-- ENDIF --><!-- IF not birthdays.S_LAST_ROW -->, <!-- ENDIF --><!-- END birthdays --></strong><!-- ELSE -->{L_NO_BIRTHDAYS}<!-- ENDIF -->
+	<!-- EVENT index_body_block_birthday_append -->
+	</p>
+</div>
+<!-- ENDIF -->
+<!-- IF NEWEST_USER -->
+<div id="Stats" class="tabcontent stat-block statistics">
+	<h3>{L_STATISTICS}</h3>
+	<p>
+	<!-- EVENT index_body_block_stats_prepend -->
+	{TOTAL_POSTS} &bull; {TOTAL_TOPICS} &bull; {TOTAL_USERS} &bull; {NEWEST_USER}
+	<!-- EVENT index_body_block_stats_append -->
+	</p>
+</div>
+<!-- ENDIF -->
+<!-- EVENT index_body_stat_blocks_after -->
+
+<!-- INCLUDE overall_footer.html -->
