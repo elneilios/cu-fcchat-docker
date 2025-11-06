@@ -39,7 +39,10 @@ if (!$connection) {
 
 // Test 3: MySQL connection
 echo "<h3>Test 3: MySQL Connection</h3>";
-$mysqli = new mysqli($dbhost, $dbuser, $dbpasswd, $dbname, $dbport);
+$mysqli = mysqli_init();
+$mysqli->options(MYSQLI_INIT_COMMAND, "SET NAMES utf8");
+$mysqli->options(MYSQLI_SET_CHARSET_NAME, "utf8");
+$mysqli->real_connect($dbhost, $dbuser, $dbpasswd, $dbname, $dbport);
 
 if ($mysqli->connect_error) {
     echo "<span style='color:red'>⚠️ Connection failed: " . $mysqli->connect_error . "</span><br>";

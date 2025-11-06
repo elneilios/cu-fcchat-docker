@@ -66,7 +66,14 @@ class dbal_mysqli extends dbal
 			}
 		}
 
-		$this->db_connect_id = @mysqli_connect($this->server, $this->user, $sqlpassword, $this->dbname, $port, $socket);
+		// Use mysqli_init() to set charset before connection (compatibility with MySQL 9.x)
+		$this->db_connect_id = mysqli_init();
+		if ($this->db_connect_id)
+		{
+			@mysqli_options($this->db_connect_id, MYSQLI_INIT_COMMAND, "SET NAMES utf8");
+			@mysqli_options($this->db_connect_id, MYSQLI_SET_CHARSET_NAME, "utf8");
+			@mysqli_real_connect($this->db_connect_id, $this->server, $this->user, $sqlpassword, $this->dbname, $port, $socket);
+		}
 
 		if ($this->db_connect_id && $this->dbname != '')
 		{
