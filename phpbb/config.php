@@ -2,7 +2,7 @@
 // phpBB 3.0.x configuration file for Railway deployment
 
 $dbms = 'mysqli';
-$dbhost = 'discerning-smile.railway.internal';
+$dbhost = 'cu-fcchat-docker.railway.internal';
 $dbport = '3306';
 $dbname = 'railway';
 $dbuser = 'phpbbuser';
