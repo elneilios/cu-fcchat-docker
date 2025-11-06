@@ -27,7 +27,7 @@ You can set up the environment in two ways:
 **Option A: Copy live server data**
 1. Copy the live server's phpBB site files into this repo's `phpbb/` folder (FTP/SFTP; copy `/var/www/html`).
 2. Export a SQL backup from the live server (phpMyAdmin or export tool) and place the `.sql` file at `db_init/001_phpbb_backup.sql`.
-  A placeholder example `db_init/001_phpbb_backup.sql.example` is included — copy your real dump to `db_init/001_phpbb_backup.sql` (the real file is ignored by git).
+  A placeholder example `db_init/001_phpbb_backup.sql.example` is included — replace it with your real dump (SQL files are tracked via Git LFS).
 
 **Option B: Restore from an existing backup in the repo**
 1. List available backups in the `backups/` directory (e.g., `20251106_0102_3.2.11`).
@@ -79,7 +79,7 @@ Restore a snapshot (example):
 .\restore.ps1 -SnapshotFolder 20251106_0102_3.2.11
 ```
 
-Backups are saved under `backups/` (this folder is ignored by git). Test restores in a disposable environment.
+Backups are saved under `backups/` and are tracked in the repository via Git LFS for colleague access. Test restores in a disposable environment.
 
 ## Upgrade phpBB guidance
 
