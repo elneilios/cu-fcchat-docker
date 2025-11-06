@@ -7,13 +7,13 @@ echo "<h2>Database Connection Test</h2>";
 
 // Test both private and public hostnames
 $hosts_to_test = [
-    'Private (mysql.railway.internal)' => ['host' => 'mysql.railway.internal', 'port' => '3306'],
-    'Public (switchyard.proxy.rlwy.net)' => ['host' => 'switchyard.proxy.rlwy.net', 'port' => '25869']
+    'Private (discerning-smile.railway.internal)' => ['host' => 'discerning-smile.railway.internal', 'port' => '3306'],
+    'Public (shortline.proxy.rlwy.net)' => ['host' => 'shortline.proxy.rlwy.net', 'port' => '53550']
 ];
 
 $dbname = 'railway';
-$dbuser = 'root';
-$dbpasswd = 'lAjbGuLDXxSMsZbgSHGIGpcGBlzUiCSm';
+$dbuser = 'phpbbuser';
+$dbpasswd = 'phpbbpass';
 
 foreach ($hosts_to_test as $test_name => $config) {
     $dbhost = $config['host'];
