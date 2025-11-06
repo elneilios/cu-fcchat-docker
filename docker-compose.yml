@@ -6,7 +6,7 @@ services:
       - "8080:80"
     volumes:
       - ./phpbb:/var/www/html                      # phpBB source
-      - ./docker-overrides/config.php:/var/www/html/config.php # Local config settings override to connect to Docker database
+      - ./config:/config                           # Docker-specific config files
       - phpbb_data_uploads:/var/www/html/files     # uploads (persistent)
       - phpbb_data_cache:/var/www/html/cache       # cache (persistent)
       - phpbb_data_sessions:/var/www/html/store    # sessions/temp files
