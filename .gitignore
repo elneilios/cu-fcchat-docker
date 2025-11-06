@@ -2,8 +2,7 @@
 /backups/**
 !/backups/.gitkeep
 
-# Ignore large database backup files (keep only example files)
-/db_init/001_phpbb_backup.sql
+# Large database backup files are tracked via Git LFS (see .gitattributes)
 
 # Ignore phpbb directory contents (installed files)
 /phpbb/**
