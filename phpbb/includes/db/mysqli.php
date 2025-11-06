@@ -70,11 +70,15 @@ class dbal_mysqli extends dbal
 		$this->db_connect_id = mysqli_init();
 		if ($this->db_connect_id)
 		{
-			// Skip automatic charset detection to avoid charset 255 error with PHP 5.6 + MySQL 8.0
+			// Connect without database first to avoid charset 255 error with PHP 5.6 + MySQL 8.0
 			@mysqli_options($this->db_connect_id, MYSQLI_OPT_CONNECT_TIMEOUT, 10);
-			// Set charset to 33 (utf8) before connection to avoid charset 255 error
-			@mysqli_options($this->db_connect_id, MYSQLI_INIT_COMMAND, "SET NAMES utf8");
-			@mysqli_real_connect($this->db_connect_id, $this->server, $this->user, $sqlpassword, $this->dbname, $port, $socket, MYSQLI_CLIENT_FOUND_ROWS);
+			@mysqli_real_connect($this->db_connect_id, $this->server, $this->user, $sqlpassword, '', $port, $socket);
+			// Select database and set charset after connection
+			if ($this->db_connect_id && $this->dbname != '')
+			{
+				@mysqli_select_db($this->db_connect_id, $this->dbname);
+				@mysqli_query($this->db_connect_id, "SET NAMES 'utf8'");
+			}
 		}
 
 		if ($this->db_connect_id && $this->dbname != '')
