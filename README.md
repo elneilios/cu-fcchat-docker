@@ -52,7 +52,11 @@ docker compose up -d   # ensure DB is up
 Restore a snapshot (example):
 
 ```pwsh
-.\restore.ps1 -SnapshotFolder <timestamp>
+# Interactive selection:
+.\restore.ps1
+
+# Or non-interactive by folder name (e.g. 20251106_0102_3.2.11):
+.\restore.ps1 -SnapshotFolder 20251106_0102_3.2.11
 ```
 
 Backups are saved under `backups/` (this folder is ignored by git). Test restores in a disposable environment.
@@ -78,7 +82,7 @@ If upgrading PHP itself, perform the migration in a separate staging image and t
   - cache: `phpbb_data_cache` → `/var/www/html/cache`
   - sessions: `phpbb_data_sessions` → `/var/www/html/store`
   - db: `phpbb_db_data` → `/var/lib/mysql`
-- Local override: `docker-overrides/config.php` points phpBB to the DB service (`db`, user `phpbbuser`, password `phpbbpass`) — dev only.
+- Local override: `config/docker.config.php` is copied into `phpbb/config.php` by the entrypoint to point phpBB to the DB service (`db`, user `phpbbuser`, password `phpbbpass`) — dev only.
 
 Security: this environment is for local testing. The Dockerfile relaxes apt/security checks to install legacy packages — do not use this image in production or expose it to untrusted networks.
 
