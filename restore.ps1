@@ -1,29 +1,54 @@
 # restore.ps1 - Restore phpBB snapshot
-param (
-    [Parameter(Mandatory=$true)]
-    [string]$SnapshotFolder
-)
 
-$backupDir = "C:\cu-fcchat-docker\backups\$SnapshotFolder"
+$ErrorActionPreference = "Stop"
 
-if (!(Test-Path $backupDir)) {
-    Write-Host "❌ Snapshot folder not found: $backupDir"
-    exit
+Write-Host "=== phpBB Snapshot Restore ===`n"
+
+# List available backups
+$backupsFolder = Join-Path $PSScriptRoot "backups"
+if (-not (Test-Path $backupsFolder)) {
+    Write-Host "❌ Backups folder not found: $backupsFolder" -ForegroundColor Red
+    exit 1
 }
 
-Write-Host "🔁 Restoring snapshot from $backupDir..."
+# Get all backup folders
+$backupFolders = @(Get-ChildItem -Path $backupsFolder -Directory | Select-Object -ExpandProperty Name | Sort-Object -Descending)
+if ($backupFolders.Count -eq 0) {
+    Write-Host "❌ No backup folders found in backups directory." -ForegroundColor Red
+    exit 1
+}
+
+Write-Host "Available snapshots:"
+for ($i = 0; $i -lt $backupFolders.Count; $i++) {
+    Write-Host "[$($i+1)] $($backupFolders[$i])"
+}
+
+$selection = Read-Host "Select a snapshot by number (1-$($backupFolders.Count))"
+if ($selection -notmatch '^[1-9][0-9]*$' -or [int]$selection -lt 1 -or [int]$selection -gt $backupFolders.Count) {
+    Write-Host "❌ Invalid selection." -ForegroundColor Red
+    exit 1
+}
+
+$SnapshotFolder = $backupFolders[[int]$selection-1]
+$backupDir = Join-Path $backupsFolder $SnapshotFolder
+Write-Host "Selected: $SnapshotFolder`n"
+
+
+Write-Host "🔁 Restoring snapshot from $SnapshotFolder..."
 
 # Stop running containers
 docker-compose down
 
 # Restore phpBB files
 Write-Host "📁 Restoring phpBB files..."
-Remove-Item -Recurse -Force "C:\cu-fcchat-docker\phpbb"
-Copy-Item "$backupDir\phpbb_files" "C:\cu-fcchat-docker\phpbb" -Recurse -Force
+$phpbbDir = Join-Path $PSScriptRoot "phpbb"
+Remove-Item -Recurse -Force $phpbbDir -ErrorAction SilentlyContinue
+Copy-Item "$backupDir\phpbb_files" $phpbbDir -Recurse -Force
 
 # Copy database backup to db_init for container rebuilds
 Write-Host "📋 Copying database backup to db_init..."
-Copy-Item "$backupDir\phpbb_db.sql" "C:\cu-fcchat-docker\db_init\001_phpbb_backup.sql" -Force
+$dbInitFile = Join-Path $PSScriptRoot "db_init\001_phpbb_backup.sql"
+Copy-Item "$backupDir\phpbb_db.sql" $dbInitFile -Force
 
 # Restore database
 Write-Host "🗃 Restoring database..."
