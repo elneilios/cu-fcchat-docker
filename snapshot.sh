@@ -1,11 +1,17 @@
 #!/bin/bash
 set -e
 
+# Optional label parameter
+LABEL=""
+if [ -n "$1" ]; then
+    LABEL="_$1"
+fi
+
 DATE=$(date +"%Y%m%d_%H%M%S")
-BACKUP_DIR="./backups/$DATE"
+BACKUP_DIR="./backups/${DATE}${LABEL}"
 mkdir -p "$BACKUP_DIR"
 
-echo "📦 Creating snapshot at $BACKUP_DIR ..."
+echo "📦 Creating snapshot: ${DATE}${LABEL} ..."
 
 # Dump the MariaDB database
 echo "🗄️  Dumping phpBB database..."

@@ -67,6 +67,10 @@ Create a snapshot (example):
 ```pwsh
 docker compose up -d   # ensure DB is up
 .\snapshot.ps1
+
+# Or with a descriptive label:
+.\snapshot.ps1 "3.2.11_clean"
+# Creates: backups/20251107_1430_3.2.11_clean/
 ```
 
 Restore a snapshot (example):
@@ -83,13 +87,89 @@ Backups are saved under `backups/` and are tracked in the repository via Git LFS
 
 ## Upgrade phpBB guidance
 
-1. Take a snapshot (DB + files).
-2. Update `phpbb/` code or mount a test copy.
- 
-3. Run phpBB upgrade steps (ACP or CLI) and verify functionality.
-4. Test thoroughly (logins, posts, extensions, themes). If rollback needed, restore the snapshot.
+This workflow allows you to safely upgrade a live phpBB installation by testing upgrades locally in Docker, then deploying the upgraded snapshot back to production.
 
-If upgrading PHP itself, perform the migration in a separate staging image and test all extensions/themes.
+### Full upgrade process
+
+1. **Put board into maintenance mode** on the live server (ACP → General → Board settings)
+
+2. **Copy live server code** to local `phpbb/` folder
+   - Use FTP/SFTP to download `/var/www/html` from the live server
+
+3. **Create live server database backup**
+   - Export the live database (via phpMyAdmin or mysqldump)
+   - Save as `db_init/001_phpbb_backup.sql` in this repo
+
+4. **Build and deploy the Docker container**
+   ```pwsh
+   docker compose up --build -d
+   ```
+   - Access at http://localhost:8080 to verify the local copy matches live
+
+5. **Remove custom styles** from code and database
+   - Delete custom theme folders from `phpbb/styles/`
+   - In the database, remove custom style records (or via ACP if functional)
+   - This prevents upgrade conflicts with outdated themes
+
+6. **Take a snapshot** of the clean baseline
+   ```pwsh
+   .\snapshot.ps1
+   ```
+   - Name it clearly (e.g., `YYYYMMDD_HHMM_live__no_custom_styles`)
+
+7. **Download phpBB full version zip** into `updates/` folder
+   - Get the next version from https://www.phpbb.com/downloads/
+   - Example: `phpBB-3.0.14.zip`, `phpBB-3.1.12.zip`, etc.
+
+8. **Use upgrade.ps1 to apply the version upgrade**
+   ```pwsh
+   .\upgrade.ps1
+   ```
+   - Select the downloaded zip from `updates/`
+   - Script extracts, applies upgrade, runs database migrations
+   - Test the upgraded forum thoroughly
+
+9. **Once tested and happy, create a new snapshot**
+   ```pwsh
+   .\snapshot.ps1
+   ```
+   - Name it with the new version (e.g., `YYYYMMDD_HHMM_3.0.14`)
+
+10. **Repeat steps 7-9 until up-to-date**
+    - Upgrade incrementally through each major/minor version
+    - Example path: 3.0.12 → 3.0.14 → 3.1.12 → 3.2.11 → 3.3.x
+    - Always snapshot after each successful upgrade
+
+11. **Create new theme** (optional)
+    - Install/customize a modern phpBB theme compatible with the final version
+    - Test thoroughly and take another snapshot
+
+12. **Use deploy.ps1 to deploy the last snapshot to production**
+    ```pwsh
+    .\deploy.ps1 -ServerHost your-server.com -KeyPath ~/.ssh/id_rsa
+    ```
+    - Script creates backups on the live server
+    - Uploads and imports the upgraded database
+    - Replaces live files with the upgraded snapshot
+    - Supports dry-run mode (`-DryRun`) to preview changes
+    - Turn off maintenance mode and verify live site
+
+### Rollback strategy
+
+If anything goes wrong during local testing:
+- Use `.\restore.ps1` to revert to a previous snapshot
+
+If deployment to production fails:
+- The deploy script creates automatic backups in `/root/phpbb_backup_YYYYMMDD_HHMM/` on the live server
+- Rollback instructions are displayed in the deploy output
+
+### Important notes
+
+- **Always upgrade incrementally** — jumping multiple major versions can cause database corruption
+- **Test each upgrade thoroughly** before proceeding to the next version
+- **Keep all snapshots** until the final production deployment is verified
+- **Backup your backups** — snapshots are in Git LFS but also keep local copies
+- **PHP version compatibility** — this Docker image uses PHP 5.6; upgrade PHP separately if targeting phpBB 3.3+
 
 ## Docker container details
 
