@@ -4,7 +4,7 @@ FROM centos:7
 RUN sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-*.repo \
     && sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-*.repo
 
-# Install Apache 2.4.6, PHP 5.4.16, and MariaDB client matching production
+# Install Apache 2.4.6, PHP 5.4.16, MariaDB client, and OpenSSH server
 RUN yum -y update \
     && yum -y install \
         httpd \
@@ -15,7 +15,16 @@ RUN yum -y update \
         php-mbstring \
         php-intl \
         mariadb \
+        openssh-server \
+        openssh-clients \
     && yum clean all
+
+# Configure SSH
+RUN ssh-keygen -A \
+    && mkdir -p /var/run/sshd \
+    && echo 'root:testpassword' | chpasswd \
+    && sed -i 's/#PermitRootLogin yes/PermitRootLogin yes/' /etc/ssh/sshd_config \
+    && sed -i 's/UsePAM yes/UsePAM no/' /etc/ssh/sshd_config
 
 # Copy phpBB forum files to Apache document root
 COPY ./phpbb /var/www/html/
@@ -43,7 +52,7 @@ COPY ./docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh \
     && sed -i 's/\r$//' /usr/local/bin/docker-entrypoint.sh
 
-EXPOSE 80
+EXPOSE 80 22
 
 # Use the entrypoint to handle permissions and start Apache
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
