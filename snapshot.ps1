@@ -1,13 +1,22 @@
+param(
+    [string]$Label
+)
+
 # Enable UTF-8 output for proper icons
 chcp 65001 | Out-Null
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
 # snapshot.ps1
+
 $timestamp = Get-Date -Format "yyyyMMdd_HHmm"
-$backupDir = "C:\cu-fcchat-docker\backups\$timestamp"
+$folderName = $timestamp
+if (-not [string]::IsNullOrWhiteSpace($Label)) {
+    $folderName = "${timestamp}_${Label}"
+}
+$backupDir = "C:\cu-fcchat-docker\backups\$folderName"
 
 Write-Host ""
-Write-Host "=== Creating snapshot at $timestamp ==="
+Write-Host "=== Creating snapshot: $folderName ==="
 New-Item -ItemType Directory -Force -Path $backupDir | Out-Null
 
 # --- Database backup ---
