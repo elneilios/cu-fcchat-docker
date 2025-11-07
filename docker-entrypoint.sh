@@ -6,10 +6,10 @@ PHPBB_DIR="/var/www/html"
 # ---------------------------
 # 0. Handle config.php
 # ---------------------------
-if [ -f "/config/docker.config.php" ]; then
+if [ -f "/tmp/docker.config.php" ]; then
     echo "Copying Docker-specific config.php..."
-    cp /config/docker.config.php "$PHPBB_DIR/config.php"
-    chown www-data:www-data "$PHPBB_DIR/config.php"
+    cp /tmp/docker.config.php "$PHPBB_DIR/config.php"
+    chown apache:apache "$PHPBB_DIR/config.php"
     chmod 644 "$PHPBB_DIR/config.php"
 fi
 
@@ -19,7 +19,7 @@ fi
 for dir in cache files store images/avatars/upload; do
     if [ -d "$PHPBB_DIR/$dir" ]; then
         echo "Setting permissions for $dir..."
-        chown -R www-data:www-data "$PHPBB_DIR/$dir"
+        chown -R apache:apache "$PHPBB_DIR/$dir"
         chmod -R 777 "$PHPBB_DIR/$dir"
     fi
 done
@@ -46,7 +46,7 @@ fi
 # ---------------------------
 for dir in cache files store images/avatars/upload; do
     if [ -d "$PHPBB_DIR/$dir" ]; then
-        chown -R www-data:www-data "$PHPBB_DIR/$dir"
+        chown -R apache:apache "$PHPBB_DIR/$dir"
         chmod -R 777 "$PHPBB_DIR/$dir"
     fi
 done
@@ -62,10 +62,10 @@ export SERVER_PORT=${APACHE_SERVER_PORT:-80}
 # ---------------------------
 # Ensure error log exists
 touch /var/log/php_errors.log
-chown www-data:www-data /var/log/php_errors.log
+chown apache:apache /var/log/php_errors.log
 chmod 664 /var/log/php_errors.log
 
-cat <<EOL > /usr/local/etc/php/conf.d/phpbb.ini
+cat <<EOL > /etc/php.d/phpbb.ini
 ; phpBB session settings
 session.save_handler = files
 session.save_path = /var/www/html/store

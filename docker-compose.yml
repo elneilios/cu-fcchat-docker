@@ -6,7 +6,7 @@ services:
       - "8080:80"
     volumes:
       - ./phpbb:/var/www/html                      # phpBB source
-      - ./config:/config                           # Docker-specific config files
+      - ./config/docker.config.php:/tmp/docker.config.php:ro  # Docker config source (temporary location)
       - phpbb_data_uploads:/var/www/html/files     # uploads (persistent)
       - phpbb_data_cache:/var/www/html/cache       # cache (persistent)
       - phpbb_data_sessions:/var/www/html/store    # sessions/temp files
@@ -15,11 +15,9 @@ services:
     environment:
       APACHE_SERVER_NAME: localhost
       APACHE_SERVER_PORT: 8080
-    entrypoint: ["/usr/local/bin/docker-entrypoint.sh"]
-    command: ["apache2-foreground"]
 
   db:
-    image: mariadb:10.5
+    image: mysql:5.6
     container_name: phpbb-db
     environment:
       MYSQL_ROOT_PASSWORD: rootpassword
@@ -29,6 +27,7 @@ services:
     volumes:
       - ./db_init:/docker-entrypoint-initdb.d
       - phpbb_db_data:/var/lib/mysql
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
 
 volumes:
   phpbb_data_uploads:

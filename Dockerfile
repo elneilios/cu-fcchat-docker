@@ -1,40 +1,50 @@
-FROM php:5.6-apache
+FROM centos:7
 
-# Switch to archive repositories and allow old signatures
-RUN sed -i 's|http://deb.debian.org/debian|http://archive.debian.org/debian|g' /etc/apt/sources.list \
-    && sed -i 's|http://security.debian.org/debian-security|http://archive.debian.org/debian-security|g' /etc/apt/sources.list \
-    && sed -i '/stretch-updates/d' /etc/apt/sources.list \
-    && echo 'Acquire::Check-Valid-Until "false";' > /etc/apt/apt.conf.d/99no-check-valid-until \
-    && echo 'Acquire::AllowInsecureRepositories "true";' >> /etc/apt/apt.conf.d/99no-check-valid-until \
-    && echo 'APT::Get::AllowUnauthenticated "true";' >> /etc/apt/apt.conf.d/99no-check-valid-until \
-    && apt-get update -o Acquire::Check-Valid-Until=false -o Acquire::AllowInsecureRepositories=true \
-    && apt-get install -y --allow-unauthenticated \
-        libpng-dev \
-        libjpeg-dev \
-        libfreetype6-dev \
-        libxml2-dev \
-        libzip-dev \
-        unzip \
-        libicu-dev \
-    && docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/ \
-    && docker-php-ext-install gd mysqli mbstring intl zip xml \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+# CentOS 7 is EOL, switch to vault repositories
+RUN sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-*.repo \
+    && sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-*.repo
 
-# Copy phpBB forum files
+# Install Apache 2.4.6, PHP 5.4.16, and MariaDB client matching production
+RUN yum -y update \
+    && yum -y install \
+        httpd \
+        php \
+        php-mysql \
+        php-gd \
+        php-xml \
+        php-mbstring \
+        php-intl \
+        mariadb \
+    && yum clean all
+
+# Copy phpBB forum files to Apache document root
 COPY ./phpbb /var/www/html/
 
-# Create PHP error log and set permissions
+# Set proper permissions
+RUN chown -R apache:apache /var/www/html \
+    && chmod -R 755 /var/www/html \
+    && chmod 666 /var/www/html/config.php \
+    && chmod 777 /var/www/html/cache /var/www/html/files /var/www/html/store /var/www/html/images/avatars/upload
+
+# Create PHP error log
 RUN touch /var/log/php_errors.log \
-    && chown www-data:www-data /var/log/php_errors.log \
+    && chown apache:apache /var/log/php_errors.log \
     && chmod 664 /var/log/php_errors.log
+
+# Configure Apache to prioritize index.php over index.html
+RUN echo '<Directory /var/www/html>' > /etc/httpd/conf.d/phpbb.conf \
+    && echo '    DirectoryIndex index.php index.html' >> /etc/httpd/conf.d/phpbb.conf \
+    && echo '    AllowOverride All' >> /etc/httpd/conf.d/phpbb.conf \
+    && echo '    Require all granted' >> /etc/httpd/conf.d/phpbb.conf \
+    && echo '</Directory>' >> /etc/httpd/conf.d/phpbb.conf
 
 # Copy and enable the custom entrypoint
 COPY ./docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
-
-# Use the entrypoint to handle permissions and cache cleanup
-ENTRYPOINT ["docker-entrypoint.sh"]
-CMD ["apache2-foreground"]
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh \
+    && sed -i 's/\r$//' /usr/local/bin/docker-entrypoint.sh
 
 EXPOSE 80
+
+# Use the entrypoint to handle permissions and start Apache
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+CMD ["/usr/sbin/httpd", "-D", "FOREGROUND"]
