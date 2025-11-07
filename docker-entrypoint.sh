@@ -81,7 +81,13 @@ date.timezone = Europe/London
 EOL
 
 # ---------------------------
-# 7. Start Apache
+# 7. Start SSH daemon
+# ---------------------------
+echo "Starting SSH daemon..."
+/usr/sbin/sshd
+
+# ---------------------------
+# 8. Start Apache
 # ---------------------------
 echo "Starting Apache..."
 exec "$@"

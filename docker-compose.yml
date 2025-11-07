@@ -4,6 +4,7 @@ services:
     container_name: phpbb
     ports:
       - "8080:80"
+      - "2222:22"
     volumes:
       - ./phpbb:/var/www/html                      # phpBB source
       - ./config/docker.config.php:/tmp/docker.config.php:ro  # Docker config source (temporary location)
