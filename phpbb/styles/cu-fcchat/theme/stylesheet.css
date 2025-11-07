@@ -2,19 +2,23 @@
 /* Load this style's colour overrides after prosilver */
 @import url("colours.css");
 
-/* Map site-specific variables to brand palette for consistency */
-:root {
-    --cu-blue-dark: var(--brand-primary);
-    --cu-blue-light: var(--brand-primary-light);
+/* === Body background === */
+/* Full-color stadium photo with gradient overlay from brand blue to black */
+html {
+    background-color: #000; /* Black fallback */
+    /* Layer gradient overlay on top of photo using multiple backgrounds */
+    background-image: 
+        linear-gradient(to bottom, rgba(20, 66, 126, 0.85) 0%, rgba(0, 0, 0, 0.9) 100%),
+        url("./images/background.webp");
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-position: center center;
+    background-size: cover;
 }
 
-/* === Body background === */
-html, body {
-    background-image: url("./images/background.png");
-    background-repeat: no-repeat;
-    background-attachment: fixed; /* keeps the image static */
-    background-position: center top;
-    background-size: cover; /* scales nicely to fit all screens */
+body {
+    position: relative;
+    background: transparent; /* Let html background show through */
 }
 
 /* === Custom site logo === */
