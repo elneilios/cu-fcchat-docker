@@ -20,7 +20,7 @@ Keeping custom styles here ensures they are **never lost** and are always tracke
 - **Features**:
   - Modern Exo 2 font for headers
   - Orbitron font for tagline with wide letter spacing
-  - Cambridge United gold accent color (rgb(217, 191, 94))
+  - Colchester United gold accent color (rgb(217, 191, 94))
   - Custom background and logo
 
 ## Usage
@@ -57,7 +57,7 @@ custom-styles/
         ├── colours.css              # Color scheme
         ├── stylesheet.css           # Main styles (Exo 2 + Orbitron fonts)
         └── images/
-            ├── logo.png             # Cambridge United logo
+            ├── logo.png             # Colchester United logo
             ├── background.webp      # Main background
             ├── background_bwa.webp  # Alternate background
             └── background_stripes.png # Stripe pattern

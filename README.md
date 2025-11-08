@@ -195,7 +195,7 @@ Security: this environment is for local testing. The Dockerfile relaxes apt/secu
 Custom phpBB styles are maintained in the `custom-styles/` directory, separate from the volatile `phpbb/` folder. This ensures they are never lost during backups, restores, or upgrades.
 
 **Current styles:**
-- `cu-fcchat` - Custom Cambridge United theme with Exo 2 and Orbitron fonts
+- `cu-fcchat` - Custom Colchester United theme with Exo 2 and Orbitron fonts
 
 **Syncing custom styles:**
 ```pwsh
