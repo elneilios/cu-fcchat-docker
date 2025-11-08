@@ -1,5 +1,8 @@
-# Track backups, db_init SQL files, and phpbb code for colleague deployment
+# Track db_init SQL files and phpbb code for colleague deployment
 # SQL files tracked via Git LFS (see .gitattributes)
+
+# Ignore backups - these are local snapshots, not needed in source control
+/backups/
 
 # Ignore temporary/cache/session files that shouldn't be in version control
 /phpbb/cache/*

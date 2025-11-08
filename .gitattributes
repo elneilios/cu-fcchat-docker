@@ -1,4 +1,5 @@
 # Track SQL files with Git LFS for efficient handling of large database dumps
 *.sql filter=lfs diff=lfs merge=lfs -text
+*.sql.gz filter=lfs diff=lfs merge=lfs -text
 phpbb/colu/installf/schemas/*.sql !text !filter !merge !diff
 phpbb/installf/schemas/*.sql !text !filter !merge !diff
