@@ -594,6 +594,8 @@ $replaceCmd = @(
     "if [ ! -f $stagingDir/files/index.php ]; then echo 'staging does not contain index.php' >&2; exit 1; fi",
     # Overlay copy using tar stream to preserve perms and handle dotfiles reliably
     "tar -C $stagingDir/files -cf - . | tar -C $PhpbbPath -xf -",
+    # Restore live config.php from backup tarball (preserves database connection to live server)
+    "tar -xzOf $serverBackupDir/phpbb_files_backup.tgz `$(basename $PhpbbPath)/config.php > $PhpbbPath/config.php || cp -p $serverBackupDir/phpbb_files_backup/config.php $PhpbbPath/config.php",
     # Clear caches after overlay
     "rm -rf $PhpbbPath/cache/* $PhpbbPath/store/* 2>/dev/null || true",
     # Ownership and permissions
@@ -612,6 +614,57 @@ if ($replaceResult -ne 0) {
     exit 1
 }
 Write-Host "✅ Files replaced and permissions set`n" -ForegroundColor Green
+
+# Apply production config fix (only for production server deployments)
+$isProductionServer = $ServerHost -match 'cu-fcchat\.com'
+if (-not $SkipDatabase -and $isProductionServer) {
+    Write-Host "→ Applying production configuration fixes..." -ForegroundColor Cyan
+    
+    # Build SQL statements to fix production config
+    $configFixSql = @"
+UPDATE phpbb_config SET config_value = 'cu-fcchat.com' WHERE config_name = 'server_name';
+UPDATE phpbb_config SET config_value = 'http://' WHERE config_name = 'server_protocol';
+UPDATE phpbb_config SET config_value = '80' WHERE config_name = 'server_port';
+UPDATE phpbb_config SET config_value = '/' WHERE config_name = 'script_path';
+UPDATE phpbb_config SET config_value = '' WHERE config_name = 'cookie_domain';
+UPDATE phpbb_config SET config_value = '0' WHERE config_name = 'cookie_secure';
+"@
+    
+    # Apply the SQL fix directly
+    $configFixCmd = "mysql -h $dbhost -u $dbuser"
+    if (-not [string]::IsNullOrWhiteSpace($dbpasswd)) {
+        $configFixCmd += " -p$dbpasswd"
+    }
+    $configFixCmd += " $dbname -e `"$configFixSql`""
+    
+    if ((Invoke-SSH $configFixCmd) -ne 0) {
+        Write-Host "⚠️  Config fix SQL returned warnings (may be non-critical)" -ForegroundColor Yellow
+    } else {
+        Write-Host "✅ Production config applied (server_name, ports, cookies)" -ForegroundColor Green
+        
+        # Clear cache and sessions for clean state
+        Write-Host "→ Clearing cache and sessions..." -ForegroundColor Cyan
+        $clearCmd = @(
+            "rm -rf $PhpbbPath/cache/production/* 2>/dev/null || true",
+            "mysql -h $dbhost -u $dbuser"
+        )
+        if (-not [string]::IsNullOrWhiteSpace($dbpasswd)) {
+            $clearCmd[1] += " -p$dbpasswd"
+        }
+        $clearCmd[1] += " $dbname -e 'TRUNCATE TABLE phpbb_sessions;'"
+        $clearCmd = $clearCmd -join "; "
+        
+        if ((Invoke-SSH $clearCmd) -ne 0) {
+            Write-Host "⚠️  Cache/session clearing reported warnings" -ForegroundColor Yellow
+        } else {
+            Write-Host "✅ Cache and sessions cleared`n" -ForegroundColor Green
+        }
+    }
+} elseif (-not $SkipDatabase -and -not $isProductionServer) {
+    Write-Host "ℹ️  Skipping production config fixes (not deploying to cu-fcchat.com)`n" -ForegroundColor Gray
+} else {
+    Write-Host "⏭️  Skipping production config fixes (files-only deployment)`n" -ForegroundColor Yellow
+}
 
 # Cleanup
 Write-Host "→ Cleaning up temporary files..." -ForegroundColor Cyan
