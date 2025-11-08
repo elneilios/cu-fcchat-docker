@@ -66,6 +66,10 @@ docker-compose up -d db
 Start-Sleep -Seconds 10
 Get-Content "$backupDir\phpbb_db.sql" | docker exec -i phpbb-db sh -c "mysql -u phpbbuser -pphpbbpass phpbb"
 
+# Sync custom styles
+Write-Host "🎨 Syncing custom styles..."
+& "$PSScriptRoot\sync-custom-styles.ps1"
+
 # Bring everything up
 docker-compose up -d
 

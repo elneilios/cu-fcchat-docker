@@ -4,6 +4,9 @@
 # Ignore backups - these are local snapshots, not needed in source control
 /backups/
 
+# Ignore phpbb custom styles (maintained separately in /custom-styles/)
+/phpbb/styles/cu-fcchat/
+
 # Ignore temporary/cache/session files that shouldn't be in version control
 /phpbb/cache/*
 !/phpbb/cache/.htaccess

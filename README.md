@@ -190,6 +190,51 @@ If deployment to production fails:
 
 Security: this environment is for local testing. The Dockerfile relaxes apt/security checks to install legacy packages — do not use this image in production or expose it to untrusted networks.
 
+## Custom Styles
+
+Custom phpBB styles are maintained in the `custom-styles/` directory, separate from the volatile `phpbb/` folder. This ensures they are never lost during backups, restores, or upgrades.
+
+**Current styles:**
+- `cu-fcchat` - Custom Cambridge United theme with Exo 2 and Orbitron fonts
+
+**Syncing custom styles:**
+```pwsh
+# Sync all custom styles to phpbb/styles/
+.\sync-custom-styles.ps1
+
+# Sync specific style
+.\sync-custom-styles.ps1 -StyleName "cu-fcchat"
+```
+
+The `restore.ps1` script automatically syncs custom styles after restoring a backup.
+
+See `custom-styles/README.md` for detailed documentation.
+
+## Version Control and Milestones
+
+**Git Tagging:**
+Use semantic versioning to mark significant milestones:
+
+```pwsh
+# Create a milestone tag
+.\tag-milestone.ps1 -Version "1.0.0" -Message "Initial production release"
+
+# Create and push to remote
+.\tag-milestone.ps1 -Version "1.1.0" -Message "Added modern fonts" -Push
+```
+
+**Recommended tagging strategy:**
+- `1.0.0` - Initial production deployment
+- `1.x.0` - Minor updates (style changes, configuration tweaks)
+- `2.0.0` - Major phpBB version upgrades
+- `x.x.1` - Hotfixes and patches
+
+**View tags:**
+```pwsh
+git tag -l                    # List all tags
+git show v1.0.0              # Show tag details
+```
+
 ---
 
 For more detail see `Dockerfile`, `docker-entrypoint.sh`, `docker-compose.yml` and the scripts in the repo.

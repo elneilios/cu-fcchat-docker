@@ -1,0 +1,1136 @@
+/*
+--------------------------------------------------------------
+Colours and backgrounds for common.css
+-------------------------------------------------------------- */
+
+:root {
+	/* Brand */
+	--brand-primary: rgb(20, 66, 126); /* club blue */
+	/* Fallbacks for browsers without color-mix support */
+	--brand-primary-dark: rgb(17, 56, 107); /* ~15% darker */
+	--brand-primary-light: rgb(55, 94, 145); /* ~15% lighter */
+	--brand-accent: rgb(217, 191, 94);
+	--brand-accent-dark: rgb(173, 153, 75); /* darker version for better contrast */
+
+	/* Links */
+	--link-color: rgb(16, 82, 137);
+	--link-hover: rgb(217, 191, 94); /* typically same as brand-accent */
+	--header-link-hover: rgb(168, 216, 255);
+	--postlink-color: rgb(54, 138, 210);
+	--postlink-visited: rgb(93, 143, 189);
+	--postlink-hover-bg: rgb(208, 228, 246);
+	--postlink-hover-text: rgb(13, 68, 115);
+
+	/* Surfaces - flat design: base grey, all other layers white */
+	--bg: rgb(243, 243, 243); /* base background */
+	--surface: rgb(243, 243, 243); /* base for panels and content areas */
+	--surface-muted: rgb(255, 255, 255); /* panels */
+	--surface-1: rgb(216, 232, 247); /* bg1 - zebra odd - light blue stripe */
+	--surface-2: rgb(250, 250, 250); /* bg2 - zebra even - off-white stripe */
+	--surface-3: rgb(255, 255, 255); /* bg3, navbar */
+	--border: rgb(230, 233, 237);
+	--divider: rgb(204, 204, 204);
+	--divider-strong: rgb(191, 193, 207);
+
+	/* Text */
+	--text: rgb(51, 51, 51);
+	--text-muted: rgb(83, 100, 130);
+	--text-subtle: rgb(76, 93, 119);
+	--heading: rgb(40, 49, 63);
+	--heading-inverse: rgb(255, 255, 255);
+	--heading-accent: rgb(17, 80, 152);
+
+	/* State and utility */
+	--error: rgb(188, 42, 77);
+	--warning: rgb(255, 102, 0);
+	--success: rgb(27, 154, 27);
+	--info: rgb(25, 109, 181);
+
+	/* Greys */
+	--gray-100: rgb(249, 249, 249);
+	--gray-200: rgb(242, 243, 243);
+	--gray-300: rgb(236, 237, 238);
+	--gray-400: rgb(233, 233, 233);
+	--gray-500: rgb(220, 220, 220);
+	--gray-600: rgb(199, 195, 191);
+	--gray-650: rgb(185, 185, 185);
+	--gray-666: rgb(102, 102, 102); /* #666 equivalent */
+	--gray-700: rgb(180, 186, 192);
+	--gray-750: rgb(164, 179, 191);
+	--gray-777: rgb(119, 119, 119); /* #777 equivalent */
+	--gray-800: rgb(153, 153, 153);
+
+	/* Special UI colors */
+	--hover-highlight: rgb(246, 244, 208); /* light yellow for row hover */
+	--code-syntax: rgb(46, 139, 87); /* sea green for code */
+	--notice-bg: rgb(236, 213, 216); /* light pink for notices/rules */
+	--code-border: rgb(201, 210, 216); /* light grey-blue */
+	--nav-hover: rgb(170, 186, 198); /* navigation hover */
+	--tab-inactive: rgb(186, 204, 217); /* inactive tab background */
+	--tab-inactive-hover: rgb(221, 237, 251); /* inactive tab hover */
+	--cp-border: rgb(181, 193, 203); /* CP panel borders */
+	--friends-bg: rgb(238, 245, 249); /* friends list background */
+	--label-text: rgb(66, 80, 103); /* label and dt text */
+
+	/* Base */
+	--white: rgb(255, 255, 255);
+	--black: rgb(0, 0, 0);
+}
+
+/* Prefer derived variants when color-mix is supported, so light/dark track brand-primary automatically */
+@supports (color: color-mix(in srgb, black, white)) {
+	:root {
+		--brand-primary-light: color-mix(in srgb, var(--brand-primary) 85%, white); /* lighten ~15% */
+		--brand-primary-dark: color-mix(in srgb, var(--brand-primary) 85%, black); /* darken ~15% */
+	}
+}
+
+html, body {
+	color: var(--text-muted);
+	background-color: var(--bg);
+}
+
+h1 {
+	color: var(--heading-inverse);
+}
+
+h2 {
+	color: var(--heading);
+}
+
+h3 {
+	border-bottom-color: var(--divider);
+	color: var(--heading-accent);
+}
+
+hr {
+	border-color: var(--white);
+	border-top-color: var(--divider);
+}
+
+/*
+--------------------------------------------------------------
+Colours and backgrounds for links.css
+-------------------------------------------------------------- */
+
+a { color: var(--link-color); }
+a:hover { color: var(--link-hover); }
+
+/* Links on gradient backgrounds */
+.forumbg .header a, .forabg .header a, th a {
+	color: var(--white);
+}
+
+.forumbg .header a:hover, .forabg .header a:hover, th a:hover {
+	color: var(--header-link-hover);
+}
+
+/* Notification mark read link */
+.dropdown-extended a.mark_read {
+	background-color: var(--white);
+}
+
+/* Post body links */
+.postlink {
+	border-bottom-color: var(--postlink-color);
+	color: var(--postlink-color);
+}
+
+.postlink:visited {
+	border-bottom-color: var(--postlink-visited);
+	color: var(--postlink-visited);
+}
+
+.postlink:hover {
+	background-color: var(--postlink-hover-bg);
+	color: var(--postlink-hover-text);
+}
+
+.signature a, .signature a:hover {
+	background-color: transparent;
+}
+
+/* Back to top of page */
+.top i {
+	color: var(--gray-800);
+}
+
+/* Arrow links  */
+.arrow-left:hover, .arrow-right:hover {
+	color: var(--postlink-color);
+}
+
+/* Round cornered boxes and backgrounds
+---------------------------------------- */
+.wrap {
+	background-color: var(--surface);
+	border-color: var(--border);
+}
+
+.headerbar {
+	color: var(--white);
+}
+
+.headerbar, .forumbg {
+	background-color: var(--brand-primary);
+	background-image: -webkit-linear-gradient(top, var(--brand-primary-light) 0%, var(--brand-primary-dark) 2px, var(--brand-primary) 92px, var(--brand-primary) 100%);
+	background-image: linear-gradient(to bottom, var(--brand-primary-light) 0%,var(--brand-primary-dark) 2px,var(--brand-primary) 92px,var(--brand-primary) 100%);
+	background-repeat: repeat-x;
+}
+
+.forabg {
+	background-color: var(--brand-primary-dark);
+	background-image: -webkit-linear-gradient(top, var(--brand-primary-light) 0%, var(--brand-primary) 2px, var(--brand-primary-dark) 92px, var(--brand-primary-dark) 100%);
+	background-image: linear-gradient(to bottom, var(--brand-primary-light) 0%,var(--brand-primary) 2px,var(--brand-primary-dark) 92px,var(--brand-primary-dark) 100%);
+	background-repeat: repeat-x;
+}
+
+.navbar {
+	background-color: var(--surface-3);
+}
+
+.panel {
+	background-color: var(--surface-muted);
+	color: var(--heading);
+}
+
+.post:target .content {
+	color: var(--black);
+}
+
+.post:target h3 a {
+	color: var(--black);
+}
+
+.bg1 {
+	background-color: var(--surface-1);
+}
+
+table.zebra-list tr:nth-child(odd) td, ul.zebra-list li:nth-child(odd) {
+	background-color: var(--surface-1);
+}
+
+.bg2 {
+	background-color: var(--surface-2);
+}
+
+table.zebra-list tr:nth-child(even) td, ul.zebra-list li:nth-child(even) {
+	background-color: var(--surface-2);
+}
+
+.bg3	{
+	background-color: var(--surface-3);
+}
+
+.ucprowbg {
+	background-color: var(--gray-500);
+}
+
+.fieldsbg {
+	background-color: var(--gray-300);
+}
+
+/* Use parent prosilver default logo by not overriding .site_logo here */
+
+/* Horizontal lists
+----------------------------------------*/
+
+ul.navlinks {
+	border-top-color: var(--white);
+}
+
+/* Table styles
+----------------------------------------*/
+table.table1 thead th {
+	color: var(--white);
+}
+
+table.table1 tbody tr {
+	border-color: var(--divider-strong);
+}
+
+table.table1 tbody tr:hover, table.table1 tbody tr.hover {
+	background-color: var(--postlink-hover-bg);
+	color: var(--black);
+}
+
+table.table1 td {
+	color: var(--text-muted);
+}
+
+table.table1 tbody td {
+	border-top-color: var(--gray-100);
+}
+
+table.table1 tbody th {
+	border-bottom-color: var(--black);
+	color: var(--text);
+	background-color: var(--white);
+}
+
+table.info tbody th {
+	color: var(--black);
+}
+
+/* Misc layout styles
+---------------------------------------- */
+dl.details dt {
+	color: var(--black);
+}
+
+dl.details dd {
+	color: var(--text-muted);
+}
+
+.sep {
+	color: #1198D9;
+}
+
+/* Icon styles
+---------------------------------------- */
+.icon.icon-blue, a:hover .icon.icon-blue {
+	color: var(--info);
+}
+
+.icon.icon-green, a:hover .icon.icon-green{
+	color: var(--success);
+}
+
+.icon.icon-red, a:hover .icon.icon-red{
+	color: var(--error);
+}
+
+.icon.icon-orange, a:hover .icon.icon-orange{
+	color: var(--warning);
+}
+
+.icon.icon-bluegray, a:hover .icon.icon-bluegray{
+	color: var(--text-muted);
+}
+
+.icon.icon-gray, a:hover .icon.icon-gray{
+	color: var(--gray-777);
+}
+
+.icon.icon-lightgray, a:hover .icon.icon-lightgray{
+	color: var(--gray-800);
+}
+
+.icon.icon-black, a:hover .icon.icon-black{
+	color: var(--text);
+}
+
+.alert_close .icon:before {
+	background-color: var(--white);
+}
+
+/* Jumpbox */
+.jumpbox .dropdown li {
+	border-top-color: var(--divider);
+}
+
+.jumpbox-cat-link {
+	background-color: var(--brand-primary-dark);
+	border-top-color: var(--brand-primary-dark);
+	color: var(--white);
+}
+
+.jumpbox-cat-link:hover {
+	background-color: var(--brand-primary);
+	border-top-color: var(--brand-primary);
+	color: var(--white);
+}
+
+.jumpbox-forum-link {
+	background-color: var(--surface-2);
+}
+
+.jumpbox-forum-link:hover {
+	background-color: var(--hover-highlight);
+}
+
+.jumpbox .dropdown .pointer-inner {
+	border-color: var(--surface-2) transparent;
+}
+
+.jumpbox-sub-link {
+	background-color: var(--surface-2);
+}
+
+.jumpbox-sub-link:hover {
+	background-color: rgb(241, 248, 255); /* very light blue hover */
+}
+
+/* Miscellaneous styles
+---------------------------------------- */
+
+.copyright {
+	color: rgb(85, 85, 85);
+}
+
+.error {
+	color: var(--error);
+}
+
+.reported {
+	background-color: rgb(247, 236, 239);
+}
+
+li.reported:hover {
+	background-color: var(--notice-bg) !important;
+}
+/* Removed empty placeholder ruleset: .sticky, .announce */
+
+div.rules {
+	background-color: var(--notice-bg);
+	color: var(--error);
+}
+
+p.post-notice {
+	background-color: var(--notice-bg);
+	background-image: none;
+}
+
+/*
+--------------------------------------------------------------
+Colours and backgrounds for content.css
+-------------------------------------------------------------- */
+
+ul.forums {
+	background-color: var(--surface-1); /* flat light blue - matches stripe */
+	background-image: none;
+}
+
+ul.topiclist li {
+	color: var(--text-subtle);
+}
+
+ul.topiclist dd {
+	border-left-color: var(--white);
+}
+
+.rtl ul.topiclist dd {
+	border-right-color: var(--white);
+	border-left-color: transparent;
+}
+
+li.row {
+	border-top-color: var(--white);
+	border-bottom-color: var(--brand-primary-dark);
+}
+
+li.row strong {
+	color: var(--black);
+}
+
+li.row:hover {
+	background-color: var(--hover-highlight);
+}
+
+li.row:hover dd {
+	border-left-color: var(--divider);
+}
+
+.rtl li.row:hover dd {
+	border-right-color: var(--divider);
+	border-left-color: transparent;
+}
+
+li.header dt, li.header dd {
+	color: var(--white);
+}
+
+/* Post body styles
+----------------------------------------*/
+.postbody {
+	color: var(--text);
+}
+
+/* Content container styles
+----------------------------------------*/
+.content {
+	color: var(--text);
+}
+
+.content h2, .panel h2 {
+	color: var(--heading-accent);
+	border-bottom-color:  var(--divider);
+}
+
+dl.faq dt {
+	color: var(--text);
+}
+
+.posthilit {
+	background-color: #F3BFCC;
+	color: var(--error);
+}
+
+/* Removed empty placeholder ruleset: .announce, .unreadpost */
+
+/* Post signature */
+.signature {
+	border-top-color: var(--divider);
+}
+
+/* Post noticies */
+.notice {
+	border-top-color: var(--divider);
+}
+
+/* BB Code styles
+----------------------------------------*/
+/* Quote block */
+blockquote {
+	background-color: #EBEADD;
+	border-color:#DBDBCE;
+}
+
+blockquote blockquote {
+	/* Nested quotes */
+	background-color:#EFEED9;
+}
+
+blockquote blockquote blockquote {
+	/* Nested quotes */
+	background-color: #EBEADD;
+}
+
+/* Code block */
+.codebox {
+	background-color: var(--white);
+	border-color: var(--code-border);
+}
+
+.codebox p {
+	border-bottom-color: var(--divider);
+}
+
+.codebox code {
+	color: var(--code-syntax);
+}
+
+/* Attachments
+----------------------------------------*/
+.attachbox {
+	background-color: var(--white);
+	border-color: var(--code-border);
+}
+
+.pm-message .attachbox {
+	background-color: var(--gray-200);
+}
+
+.attachbox dd {
+	border-top-color: var(--code-border);
+}
+
+.attachbox p {
+	color: var(--gray-666);
+}
+
+.attachbox p.stats {
+	color: var(--gray-666);
+}
+
+.attach-image img {
+	border-color: var(--gray-800);
+}
+
+/* Inline image thumbnails */
+
+dl.file dd {
+	color: var(--gray-666);
+}
+
+dl.thumbnail img {
+	border-color: var(--gray-666);
+	background-color: var(--white);
+}
+
+dl.thumbnail dd {
+	color: var(--gray-666);
+}
+
+dl.thumbnail dt a:hover {
+	background-color: var(--gray-300);
+}
+
+dl.thumbnail dt a:hover img {
+	border-color: var(--postlink-color);
+}
+
+/* Post poll styles
+----------------------------------------*/
+
+fieldset.polls dl {
+	border-top-color: var(--gray-500);
+	color: var(--gray-666);
+}
+
+fieldset.polls dl.voted {
+	color: var(--black);
+}
+
+fieldset.polls dd div {
+	color: var(--white);
+}
+
+.rtl .pollbar1, .rtl .pollbar2, .rtl .pollbar3, .rtl .pollbar4, .rtl .pollbar5 {
+	border-right-color: transparent;
+}
+
+.pollbar1 {
+	background-color: #AA2346;
+	border-bottom-color: #74162C;
+	border-right-color: #74162C;
+}
+
+.rtl .pollbar1 {
+	border-left-color: #74162C;
+}
+
+.pollbar2 {
+	background-color: #BE1E4A;
+	border-bottom-color: #8C1C38;
+	border-right-color: #8C1C38;
+}
+
+.rtl .pollbar2 {
+	border-left-color: #8C1C38;
+}
+
+.pollbar3 {
+	background-color: #D11A4E;
+	border-bottom-color: #AA2346;
+	border-right-color: #AA2346;
+}
+
+.rtl .pollbar3 {
+	border-left-color: #AA2346;
+}
+
+.pollbar4 {
+	background-color: #E41653;
+	border-bottom-color: #BE1E4A;
+	border-right-color: #BE1E4A;
+}
+
+.rtl .pollbar4 {
+	border-left-color: #BE1E4A;
+}
+
+.pollbar5 {
+	background-color: #F81157;
+	border-bottom-color: #D11A4E;
+	border-right-color: #D11A4E;
+}
+
+.rtl .pollbar5 {
+	border-left-color: #D11A4E;
+}
+
+/* Poster profile block
+----------------------------------------*/
+.postprofile {
+	color: var(--gray-666);
+	border-color: var(--white);
+}
+
+.pm .postprofile {
+	border-color: var(--gray-500);
+}
+
+.postprofile strong {
+	color: var(--black);
+}
+
+dd.profile-warnings {
+	color: var(--error);
+}
+
+/*
+--------------------------------------------------------------
+Colours and backgrounds for buttons.css
+-------------------------------------------------------------- */
+.button {
+	border-color: var(--gray-600);
+	background-color: var(--gray-400);
+	background-image: none; /* flat design */
+	box-shadow: 0 0 0 1px var(--white) inset;
+	-webkit-box-shadow: 0 0 0 1px var(--white) inset;
+	color: var(--brand-accent-dark);
+}
+
+.button:hover,
+.button:focus {
+	border-color: var(--brand-primary);
+	background-color: var(--white);
+	background-image: none; /* flat design */
+	text-shadow: none;
+}
+
+
+.button .icon,
+.button-secondary {
+	color: rgb(143, 143, 143);
+}
+
+.button-secondary:focus,
+.button-secondary:hover,
+.button:focus .icon,
+.button:hover .icon {
+	color: var(--brand-primary);
+}
+
+.button-search:hover,
+.button-search-end:hover {
+	border-color: var(--gray-600);
+}
+
+.caret	{ border-color: var(--gray-600); }
+
+.contact-icons a		{ border-color: var(--gray-500); }
+.contact-icons a:hover	{ background-color: rgb(242, 246, 249); }
+
+/* Pagination
+---------------------------------------- */
+
+.pagination li a {
+	background: var(--gray-300);
+	filter: none;
+	border-color: var(--gray-700);
+	box-shadow: none;
+	-webkit-box-shadow: none;
+	color: rgb(92, 117, 140);
+}
+
+.pagination li.ellipsis span {
+	background: transparent;
+	color: var(--black);
+}
+
+.pagination li.active span {
+	background: var(--brand-primary);
+	border-color: var(--brand-primary);
+	color: var(--white);
+}
+
+.pagination li a:hover, .pagination li a:hover .icon, .pagination .dropdown-visible a.dropdown-trigger, .nojs .pagination .dropdown-container:hover a.dropdown-trigger {
+	background: var(--postlink-color);
+	border-color: var(--postlink-color);
+	filter: none;
+	color: var(--white);
+	text-shadow: none;
+}
+
+/* Search box
+--------------------------------------------- */
+
+.search-box .inputbox,
+.search-box .inputbox:hover,
+.search-box .inputbox:focus {
+	border-color: var(--gray-600);
+}
+
+.search-header {
+	box-shadow: 0 0 10px var(--brand-primary-dark);
+}
+
+/*
+--------------------------------------------------------------
+Colours and backgrounds for cp.css
+-------------------------------------------------------------- */
+
+/* Main CP box
+----------------------------------------*/
+
+.panel-container h3, .panel-container hr, .cp-menu hr {
+	border-color: var(--gray-750);
+}
+
+.panel-container .panel li.row {
+	border-bottom-color: var(--cp-border);
+	border-top-color: var(--gray-100);
+}
+
+ul.cplist {
+	border-top-color: var(--cp-border);
+}
+
+.panel-container .panel li.header dd, .panel-container .panel li.header dt {
+	color: var(--black);
+}
+
+.panel-container table.table1 thead th {
+	color: var(--text);
+	border-bottom-color: var(--text);
+}
+
+.cp-main .pm-message {
+	border-color: var(--gray-500);
+	background-color: var(--white);
+}
+
+/* CP tabbed menu
+----------------------------------------*/
+.tabs .tab > a {
+	background: var(--tab-inactive);
+	color: var(--text-muted);
+}
+
+.tabs .tab > a:hover {
+	background: var(--tab-inactive-hover);
+	color: var(--brand-accent);
+}
+
+.tabs .activetab > a,
+.tabs .activetab > a:hover {
+	background-color: var(--surface-3);
+	background-image: none; /* flat design */
+	border-color: var(--surface-3);
+	box-shadow: none;
+	color: var(--text);
+}
+
+.tabs .activetab > a:hover {
+	color: var(--black);
+}
+
+/* Mini tabbed menu used in MCP
+----------------------------------------*/
+.minitabs .tab > a {
+	background-color: var(--surface-2);
+}
+
+.minitabs .activetab > a,
+.minitabs .activetab > a:hover {
+	background-color: var(--gray-100);
+	color: var(--text);
+}
+
+/* Responsive tabs
+----------------------------------------*/
+.responsive-tab .responsive-tab-link:before {
+	border-color: var(--text-muted);
+}
+
+.responsive-tab .responsive-tab-link:hover:before {
+	border-color: var(--brand-accent);
+}
+
+/* UCP navigation menu
+----------------------------------------*/
+
+/* Link styles for the sub-section links */
+.navigation a {
+	color: var(--text);
+	background: var(--surface-3);
+	background-image: none; /* flat design */
+}
+
+.rtl .navigation a {
+	background: var(--surface-3);
+	background-image: none; /* flat design */
+}
+
+.navigation a:hover {
+	background: var(--nav-hover);
+	color: var(--error);
+}
+
+.navigation .active-subsection a {
+	background: var(--gray-100);
+	color: var(--brand-accent);
+}
+
+.navigation .active-subsection a:hover {
+	color: var(--brand-accent);
+}
+
+@media only screen and (max-width: 900px), only screen and (max-device-width: 900px)
+{
+	#navigation a, .rtl #navigation a {
+		background: rgb(178, 194, 207);
+	}
+}
+
+/* Preferences pane layout
+----------------------------------------*/
+.panel-container h2 {
+	color: var(--text);
+}
+
+.panel-container .panel {
+	background-color: var(--gray-100);
+}
+
+.cp-main .pm {
+	background-color: var(--white);
+}
+
+/* Friends list */
+.cp-mini {
+	background-color: var(--friends-bg);
+}
+
+dl.mini dt {
+	color: var(--label-text);
+}
+
+/* PM Styles
+----------------------------------------*/
+/* PM Message history */
+.current {
+	color: var(--black) !important;
+}
+
+/* PM marking colours */
+.pmlist li.pm_message_reported_colour, .pm_message_reported_colour {
+	border-left-color: var(--error);
+	border-right-color: var(--error);
+}
+
+.pmlist li.pm_marked_colour, .pm_marked_colour {
+	border-color: var(--warning);
+}
+
+.pmlist li.pm_replied_colour, .pm_replied_colour {
+	border-color: rgb(169, 184, 194);
+}
+
+.pmlist li.pm_friend_colour, .pm_friend_colour {
+	border-color: var(--postlink-visited);
+}
+
+.pmlist li.pm_foe_colour, .pm_foe_colour {
+	border-color: var(--black);
+}
+
+/* Avatar gallery */
+.gallery label {
+	background: var(--white);
+	border-color: var(--divider);
+}
+
+.gallery label:hover {
+	background-color: var(--gray-300);
+}
+
+/*
+--------------------------------------------------------------
+Colours and backgrounds for forms.css
+-------------------------------------------------------------- */
+
+/* General form styles
+----------------------------------------*/
+select {
+	border-color: var(--gray-666);
+	background-color: var(--gray-100);
+	color: var(--black);
+}
+
+label {
+	color: var(--label-text);
+}
+
+option.disabled-option {
+	color: graytext;
+}
+
+/* Definition list layout for forms
+---------------------------------------- */
+dd label {
+	color: var(--text);
+}
+
+fieldset.fields1 {
+	background-color: transparent;
+}
+
+/* Hover effects */
+fieldset dl:hover dt label {
+	color: var(--black);
+}
+
+fieldset.fields2 dl:hover dt label {
+	color: inherit;
+}
+
+/* Quick-login on index page */
+fieldset.quick-login input.inputbox {
+	background-color: var(--gray-200);
+}
+
+/* Posting page styles
+----------------------------------------*/
+
+.message-box textarea {
+	color: var(--text);
+}
+
+.message-box textarea.drag-n-drop {
+	outline-color: rgba(102, 102, 102, 0.5);
+}
+
+.message-box textarea.drag-n-drop-highlight {
+	outline-color: rgba(20, 66, 126, 0.5); /* brand primary with transparency */
+}
+
+/* Input field styles
+---------------------------------------- */
+.inputbox {
+	background-color: var(--white);
+	border-color: var(--gray-700);
+	color: var(--text);
+}
+
+.inputbox:-moz-placeholder {
+	color: var(--text);
+}
+
+.inputbox::-webkit-input-placeholder {
+	color: var(--text);
+}
+
+.inputbox:hover {
+	border-color: var(--brand-primary);
+}
+
+.inputbox:focus {
+	border-color: var(--brand-primary);
+}
+
+.inputbox:focus:-moz-placeholder {
+	color: transparent;
+}
+
+.inputbox:focus::-webkit-input-placeholder {
+	color: transparent;
+}
+
+
+/* Form button styles
+---------------------------------------- */
+
+a.button1, input.button1, input.button3, a.button2, input.button2 {
+	color: var(--black);
+	background-color: var(--gray-400);
+	background-image: none; /* flat design */
+}
+
+a.button1, input.button1 {
+	border-color: var(--gray-666);
+}
+
+input.button3 {
+	background-image: none;
+}
+
+/* Alternative button */
+a.button2, input.button2, input.button3 {
+	border-color: var(--gray-666);
+}
+
+/* <a> button in the style of the form buttons */
+a.button1, a.button2 {
+	color: var(--black);
+}
+
+/* Hover states */
+a.button1:hover, input.button1:hover, a.button2:hover, input.button2:hover, input.button3:hover {
+	border-color: var(--brand-accent);
+	color: var(--brand-accent);
+	background-color: var(--white);
+	background-image: none; /* flat design */
+}
+
+/* Focus states */
+input.button1:focus, input.button2:focus, input.button3:focus {
+	border-color: var(--brand-primary);
+	color: var(--brand-primary-dark);
+}
+
+input.disabled {
+	color: var(--gray-666);
+}
+
+/* jQuery popups
+---------------------------------------- */
+.phpbb_alert {
+	background-color: var(--white);
+	border-color: var(--gray-800);
+}
+.darken {
+	background-color: var(--black);
+}
+
+.dropdown-extended ul li {
+	border-top-color: var(--gray-650);
+}
+
+.dropdown-extended ul li:hover {
+	background-color: var(--postlink-hover-bg);
+	color: var(--black);
+}
+
+.dropdown-extended .header, .dropdown-extended .footer {
+	border-color: var(--gray-650);
+	color: var(--black);
+}
+
+.dropdown-extended .footer {
+	border-top-style: solid;
+	border-top-width: 1px;
+}
+
+.dropdown-extended .header {
+	background-color: var(--surface-3);
+	background-image: none; /* flat design */
+}
+
+.dropdown .pointer {
+	border-color: var(--gray-650) transparent;
+}
+
+.dropdown .pointer-inner {
+	border-color: var(--white) transparent;
+}
+
+.dropdown-extended .pointer-inner {
+	border-color: var(--surface-3) transparent;
+}
+
+.dropdown .dropdown-contents {
+	background: var(--white);
+	border-color: var(--gray-650);
+	box-shadow: 1px 3px 5px rgba(0, 0, 0, 0.2);
+}
+
+.dropdown-up .dropdown-contents {
+	box-shadow: 1px 0 5px rgba(0, 0, 0, 0.2);
+}
+
+.dropdown li, .dropdown li li {
+	border-color: var(--gray-500);
+}
+
+.dropdown li.separator {
+	border-color: var(--gray-500);
+}
+
+/* Notifications
+---------------------------------------- */
+
+.notification_list p.notification-time {
+	color: var(--text-subtle);
+}
+
+li.notification-reported strong, li.notification-disapproved strong {
+	color: var(--brand-accent);
+}
+
+.badge {
+	background-color: var(--brand-accent);
+	color: var(--white);
+}
