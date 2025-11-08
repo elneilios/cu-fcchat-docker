@@ -21,7 +21,7 @@ New-Item -ItemType Directory -Force -Path $backupDir | Out-Null
 
 # --- Database backup ---
 Write-Host "→ Backing up database..."
-docker exec phpbb-db sh -c "mysqldump -u phpbbuser -pphpbbpass phpbb" | Out-File -FilePath "$backupDir\phpbb_db.sql" -Encoding utf8
+docker exec phpbb-db sh -c "mysqldump --no-tablespaces -u phpbbuser -pphpbbpass phpbb" | Out-File -FilePath "$backupDir\phpbb_db.sql" -Encoding utf8
 
 # --- phpBB files backup ---
 Write-Host "→ Backing up phpBB files..."
