@@ -1,4 +1,0 @@
-<?php exit; ?>
-1462259929
-669
-a:1:{s:7:"special";a:8:{i:1;a:2:{s:10:"rank_title";s:10:"Site Admin";s:10:"rank_image";s:0:"";}i:2;a:2:{s:10:"rank_title";s:9:"Moderator";s:10:"rank_image";s:0:"";}i:3;a:2:{s:10:"rank_title";s:18:"CUFC Media Manager";s:10:"rank_image";s:0:"";}i:4;a:2:{s:10:"rank_title";s:16:"Global Moderator";s:10:"rank_image";s:0:"";}i:5;a:2:{s:10:"rank_title";s:8:"CUFC.com";s:10:"rank_image";s:0:"";}i:6;a:2:{s:10:"rank_title";s:34:"Moderator - Boarders on the Pitch!";s:10:"rank_image";s:0:"";}i:7;a:2:{s:10:"rank_title";s:30:"Moderator - Colour &amp; Noise";s:10:"rank_image";s:0:"";}i:8;a:2:{s:10:"rank_title";s:32:"Moderator - Boarder of the Month";s:10:"rank_image";s:0:"";}}}

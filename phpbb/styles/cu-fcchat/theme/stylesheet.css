@@ -1,6 +1,10 @@
 @import url("../../prosilver/theme/stylesheet.css");
 /* Load this style's colour overrides after prosilver */
 @import url("colours.css");
+/* Import Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap');
+
 
 /* === Body background === */
 /* Full-color stadium photo with gradient overlay from brand blue to black */
@@ -36,4 +40,18 @@ body {
     background-size: contain; /* ensures logo scales properly */
     background-position: center;
     background-repeat: no-repeat; /* prevents logo from repeating */
+}
+
+/* === Header Fonts === */
+.headerbar .site-description h1 {
+    font-family: 'Exo 2', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+}
+
+.headerbar .site-description p {
+    color: var(--brand-accent);
+    font-family: 'Orbitron', 'Courier New', monospace !important;
+    letter-spacing: 0.15em;
+    font-weight: 500;
+    text-transform: uppercase;
+    font-size: 0.9em;
 }
