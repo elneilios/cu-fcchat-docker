@@ -22,14 +22,23 @@ docker compose version   # or: docker-compose --version
 
 ## Quick Start
 
-You can set up the environment in two ways:
+You can set up the environment in three ways:
 
-**Option A: Copy live server data**
+**Option A: Pull from live server**
+1. Use the pull script to download the latest code and database from your live server:
+
+```pwsh
+.\pull-live.ps1 -ServerHost myserver.com -KeyPath ~/.ssh/id_rsa
+```
+
+This automatically downloads the phpBB files to `phpbb/` and exports the database to `db_init/001_phpbb_backup.sql`.
+
+**Option B: Copy live server data manually**
 1. Copy the live server's phpBB site files into this repo's `phpbb/` folder (FTP/SFTP; copy `/var/www/html`).
 2. Export a SQL backup from the live server (phpMyAdmin or export tool) and place the `.sql` file at `db_init/001_phpbb_backup.sql`.
   A placeholder example `db_init/001_phpbb_backup.sql.example` is included — replace it with your real dump (SQL files are tracked via Git LFS).
 
-**Option B: Restore from an existing backup in the repo**
+**Option C: Restore from an existing backup in the repo**
 1. List available backups in the `backups/` directory (e.g., `20251106_0102_3.2.11`).
 2. Run the restore script:
 
@@ -58,9 +67,6 @@ Note: MariaDB runs SQL files in `db_init/` only on first-volume initialization. 
 ## Backup and Restore
 
 Use the included snapshot/restore scripts before upgrades.
-
-- Windows (PowerShell): `snapshot.ps1`, `restore.ps1`
-- Linux/macOS (sh): `snapshot.sh`, `restore.sh`
 
 Create a snapshot (example):
 
@@ -93,35 +99,34 @@ This workflow allows you to safely upgrade a live phpBB installation by testing 
 
 1. **Put board into maintenance mode** on the live server (ACP → General → Board settings)
 
-2. **Copy live server code** to local `phpbb/` folder
-   - Use FTP/SFTP to download `/var/www/html` from the live server
+2. **Pull live server code and database** to local environment
+   - Use the pull script for automated download:
+     ```pwsh
+     .\pull-live.ps1 -ServerHost your-server.com -KeyPath ~/.ssh/id_rsa
+     ```
+   - Or manually via FTP/SFTP to `phpbb/` and database export to `db_init/001_phpbb_backup.sql`
 
-3. **Create live server database backup**
-   - Export the live database (via phpMyAdmin or mysqldump)
-   - Save as `db_init/001_phpbb_backup.sql` in this repo
-
-4. **Build and deploy the Docker container**
+3. **Build and deploy the Docker container**
    ```pwsh
    docker compose up --build -d
    ```
    - Access at http://localhost:8080 to verify the local copy matches live
 
-5. **Remove custom styles** from code and database
+4. **Remove custom styles** from code and database
    - Delete custom theme folders from `phpbb/styles/`
    - In the database, remove custom style records (or via ACP if functional)
    - This prevents upgrade conflicts with outdated themes
 
-6. **Take a snapshot** of the clean baseline
+5. **Take a snapshot** of the clean baseline
    ```pwsh
-   .\snapshot.ps1
+   .\snapshot.ps1 "live__no_custom_styles"
    ```
-   - Name it clearly (e.g., `YYYYMMDD_HHMM_live__no_custom_styles`)
 
-7. **Download phpBB full version zip** into `updates/` folder
+6. **Download phpBB full version zip** into `updates/` folder
    - Get the next version from https://www.phpbb.com/downloads/
    - Example: `phpBB-3.0.14.zip`, `phpBB-3.1.12.zip`, etc.
 
-8. **Use upgrade.ps1 to apply the version upgrade**
+7. **Use upgrade.ps1 to apply the version upgrade**
    ```pwsh
    .\upgrade.ps1
    ```
@@ -129,22 +134,21 @@ This workflow allows you to safely upgrade a live phpBB installation by testing 
    - Script extracts, applies upgrade, runs database migrations
    - Test the upgraded forum thoroughly
 
-9. **Once tested and happy, create a new snapshot**
+8. **Once tested and happy, create a new snapshot**
    ```pwsh
-   .\snapshot.ps1
+   .\snapshot.ps1 "3.0.14"
    ```
-   - Name it with the new version (e.g., `YYYYMMDD_HHMM_3.0.14`)
 
-10. **Repeat steps 7-9 until up-to-date**
+9. **Repeat steps 6-8 until up-to-date**
     - Upgrade incrementally through each major/minor version
     - Example path: 3.0.12 → 3.0.14 → 3.1.12 → 3.2.11 → 3.3.x
     - Always snapshot after each successful upgrade
 
-11. **Create new theme** (optional)
+10. **Create new theme** (optional)
     - Install/customize a modern phpBB theme compatible with the final version
     - Test thoroughly and take another snapshot
 
-12. **Use deploy.ps1 to deploy the last snapshot to production**
+11. **Use deploy.ps1 to deploy the last snapshot to production**
     ```pwsh
     .\deploy.ps1 -ServerHost your-server.com -KeyPath ~/.ssh/id_rsa
     ```
