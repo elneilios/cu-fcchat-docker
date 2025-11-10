@@ -1,0 +1,173 @@
+/*  cBB Core StyleSheet
+    --------------------------------------------------------------
+	Style:	ACP
+	Copyright (c) 2024 CaniDev ( https://www.canidev.com )
+    --------------------------------------------------------------
+*/
+
+.cbb-btn.default-btn,
+a.cbb-btn.default-btn {
+    background: #3d90c6;
+    border-color: #347cac;
+}
+
+.cbb-btn.default-btn:not(:disabled):hover,
+a.cbb-btn.default-btn:not(:disabled):hover {
+    background: #2b73a1;
+    border-color: #26648d;
+}
+
+.cbb-actions-container {
+	display: flex;
+	font-size: 22px;
+	gap: 10px;
+	position: absolute;
+	right: 10px;
+	top: 4px;
+}
+
+.cbb-actions-container > a {
+	opacity: .4;
+}
+
+.cbb-actions-container > a:hover {
+	opacity: 1;
+}
+
+.cbb-table-acp {
+	background-color: #f1f1f1;
+	border: 1px solid #dfdfdf;
+	border-radius: 4px;
+	box-sizing: border-box;
+	font-size: 12px;
+	display: table;
+	margin: 10px 0;
+	width: 100%;
+}
+
+.cbb-table-acp > div {
+	display: table-row;
+	font-size: inherit;
+}
+
+.cbb-table-acp > div > div {
+	background-color: #f7f7f7;
+	border-bottom: 1px solid #e5e5e5;
+    box-sizing: border-box;
+	display: table-cell;
+	font-size: inherit;
+    padding: 8px;
+    vertical-align: middle;
+}
+
+.cbb-table-acp > div:last-child > div {
+	border-bottom-width: 0;
+}
+
+.cbb-table-acp > div.row-header > div {
+    background-color: #3d90c6;
+	border-color: #2d83bd;
+    color: #fff;
+	font-size: 0.8em;
+	text-transform: uppercase;
+}
+
+.cbb-table-acp .handle {
+	cursor: move;
+	font-size: 18px;
+    text-align: center;
+	width: 36px;
+}
+
+.cbb-table-acp .column-icon {
+	color: #105289;
+	font-size: 2em;
+	width: 40px;
+}
+
+.cbb-table-acp .column-mark {
+	text-align: center;
+	width: 30px;
+}
+
+.cbb-table-acp .column-main .explain {
+	font-size: 0.85em;
+	margin-top: 5px;
+}
+
+.cbb-table-acp .column-main .title {
+	font-weight: bold;
+}
+
+.cbb-table-acp .column-actions {
+	background-color: #f1f1f1;
+	font-size: 18px;
+	white-space: nowrap;
+}
+
+.cbb-table-acp .column-switch,
+.cbb-table-acp .column-actions {
+	border-left: 1px solid #e5e5e5;
+	min-width: 60px;
+	text-align: center;
+	width: 10%;
+}
+
+.cbb-table-acp .column-switch + .column-actions {
+	border-left: none;
+}
+
+.cbb-table-acp .column-actions a {
+	margin-left: 5px;
+}
+
+.cbb-table-acp .column-actions a.disabled {
+	color: #ccc;
+	pointer-events: none;
+}
+
+.cbb-table-acp .tag {
+    background-color: #f3f3f3;
+    border: 1px solid #d8d8d8;
+    border-radius: 4px;
+	display: inline-block;
+    font-size: 11px;
+	margin-bottom: 5px;
+    padding: 4px;
+    white-space: nowrap;
+}
+
+/* Overwrite default style
+------------------------------------------ */
+.pagination {
+	margin-top: 15px;
+}
+
+.pagination li a,
+.pagnation li span,
+li .pagination li a,
+li .pagnation li span,
+.pagination li.active span,
+.pagination li.ellipsis span {
+	border-radius: 2px;
+	font-size: 1em;
+	padding: 4px 7px;
+}
+
+.pagination li.active span {
+	background-color: #3d90c6;
+    border-color: #347cac;
+}
+
+.pagination li a:hover,
+.pagination .active a:hover {
+    background-color: #2b73a1;
+    border-color: #26648d;
+}
+
+/* RTL
+------------------------------------------ */
+.rtl .cbb-actions-container {
+	left: 10px;
+	right: unset;
+}

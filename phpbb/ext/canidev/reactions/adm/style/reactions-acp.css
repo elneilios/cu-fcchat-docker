@@ -1,0 +1,63 @@
+/*  cBB Reactions StyleSheet
+    --------------------------------------------------------------
+	Style:	ACP
+	Copyright (c) 2025 CaniDev ( https://www.canidev.com )
+    --------------------------------------------------------------
+*/
+
+.acp-reactions-table .reaction-title a {
+	display: block;
+    text-decoration: none;
+}
+
+.acp-reactions-table .reaction-title img {
+	height: 32px;
+	margin-right: 8px;
+	vertical-align: middle;
+	width: 32px;
+}
+
+.acp-reactions-table .reaction-score span {
+	background-color: #f3f3f3;
+    border: 1px solid #d8d8d8;
+    border-radius: 4px;
+    font-size: 11px;
+    padding: 4px;
+	white-space: nowrap;
+}
+
+.acp-reactions-table .column-actions a.active {
+	color: #BC2A4D;
+}
+
+.reaction-score-selector {
+	list-style-type: none;
+}
+
+.reaction-score-selector [name="score_custom"] {
+	margin-left: 20px;
+}
+
+.reaction-color-selector .color-preview {
+    border: 1px solid #ccc;
+    display: inline-block;
+    vertical-align: middle;
+    width: 12px;
+    height: 12px;
+    margin-top: -2px;
+}
+
+/* RTL
+------------------------------ */
+.rtl .acp-reactions-table .reaction-title img {
+	margin-left: 8px;
+	margin-right: unset;
+}
+
+/* Responsive
+---------------------------- */
+@media screen and (max-width: 425px) {
+	.acp-reactions-table .reaction-score {
+		display: none;
+	}
+}

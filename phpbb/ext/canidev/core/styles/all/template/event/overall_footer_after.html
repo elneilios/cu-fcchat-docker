@@ -1,0 +1,7 @@
+{% if not definition.CBBCORE_JS_LOADED %}
+	{% for script in loops.core_script %}
+	<script{{ script.PARAMS }}>{{ script.DATA }}</script>
+	{% endfor %}
+
+	{% DEFINE CBBCORE_JS_LOADED = 1 %}
+{% endif %}

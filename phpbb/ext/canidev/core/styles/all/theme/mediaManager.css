@@ -1,0 +1,373 @@
+/*  cBB Core StyleSheet
+    --------------------------------------------------------------
+	Style:	All
+	Copyright (c) 2023 CaniDev ( https://www.canidev.com )
+    --------------------------------------------------------------
+*/
+
+.cbb-icon-container {
+	font-size: 14px;
+	margin: 0 0 10px 5px;
+}
+
+.cbb-icon-container img {
+	max-height: 100px;
+	max-width: 40%;
+}
+
+.cbb-modal-dialog .cbb-media-attachments, .cbb-modal-dialog .upload-ui, .cbb-modal-dialog .media-embed {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+	bottom: 0;
+}
+
+.cbb-modal-dialog .cbb-media-attachments {
+	left: 5px;
+    top: 5px;
+}
+
+.cbb-modal-dialog .has-seekerbar .cbb-media-attachments {
+	top: 50px;
+}
+
+.cbb-media-seeker {
+	display: flex;
+	gap: 10px;
+	justify-content: space-between;
+	margin: 10px 10px 0 10px;
+}
+
+.cbb-media-attachments {
+	list-style-type: none;
+	margin: 0;
+	padding: 0;
+	overflow: auto;
+	outline: 0;
+}
+
+.cbb-media-attachments .attachment {
+    position: relative;
+    float: left;
+    padding: 0;
+    margin: 8px;
+    color: #464646;
+    cursor: pointer;
+    text-align: center;
+    user-select: none;
+	width: 8%;
+	outline: none;
+}
+
+.cbb-media-attachments .attachment.iconic {
+	width: 10%;
+}
+
+.cbb-media-attachments .media-preview {
+	box-shadow: inset 0 0 15px rgba(0,0,0,.1), inset 0 0 0 1px rgba(0,0,0,.05);
+	position: relative;
+    background: #eee;
+    cursor: pointer;
+	overflow: hidden;
+}
+
+.cbb-media-attachments .media-preview:before {
+    content: '';
+    display: block;
+    padding-top: 100%;
+}
+
+.cbb-media-attachments .media-preview .media-thumbnail {
+	position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+	text-align: left;
+	transform: translate(50%, 50%);
+}
+
+.cbb-media-attachments .media-preview .media-thumbnail img {
+    max-height: 100%;
+	margin: 0;
+    position: absolute;
+    top: 0;
+    left: 0;
+	transform: translate(-50%, -50%);
+}
+
+.cbb-media-attachments .iconic .media-preview .media-thumbnail i {
+    text-align: center;
+    display: block;
+    margin: auto;
+	transform: translate(-50%, -50%);
+}
+
+.cbb-media-attachments .iconic .media-preview .media-thumbnail .fa {
+	font-size: 1.3em;
+}
+
+.cbb-media-attachments .attachment .media-check {
+	border-radius: 50%;
+	color: #000;
+    display: none;
+    height: 26px;
+    width: 26px;
+	line-height: 22px;
+    padding: 0;
+    position: absolute;
+    z-index: 10;
+    top: -8px;
+    right: -8px;
+    outline: 0;
+    background: #ccc;
+    font-size: 11px;
+    border: 2px solid #fff;
+}
+
+.cbb-media-attachments .attachment.selected .media-check {
+	display: block;  
+}
+
+.cbb-media-attachments .attachment.active .media-check {
+	background-color: #64ca3b;
+}
+
+.cbb-modal-dialog .upload-ui.is-dragover {
+	outline: 2px dashed #ccc;
+    outline-offset: -8px;
+}
+
+.cbb-modal-dialog .uploader-inline, .upload-drop-label {
+	position: absolute;
+    left: 0;
+    right: 0;
+	text-align: center;
+}
+
+.cbb-modal-dialog .uploader-inline { top: 30%; }
+
+.cbb-modal-dialog .upload-drop-label {
+	display: none;
+	font-size: 20px;
+	top: 40%;
+}
+
+.cbb-modal-dialog .upload-ui.is-dragover .uploader-inline 		{ display: none; }
+.cbb-modal-dialog .upload-ui.is-dragover .upload-drop-label 	{ display: block; }
+
+.cbb-modal-dialog .cbb-browser-button {
+	position: relative;
+    display: inline-block;
+}
+
+.cbb-modal-dialog .cbb-browser-button .cbb-btn {
+	position: relative;
+    padding: 5px 14px;
+	cursor: pointer;
+	z-index: 1;
+}
+
+.cbb-browser-button input[type=file] {
+	box-sizing: border-box;
+	position: absolute;
+	left: 0;
+    top: 0;
+	opacity: 0;
+	width: 100%;
+	height: 100%;
+	z-index: 0;
+}
+
+.cbb-modal-dialog .upload-ui p 	{
+	margin: 0.6em;
+}
+
+.cbb-modal-dialog .upload-ui p.max-upload-size {
+	margin-top: 15px;
+}
+
+.cbb-modal-dialog .upload-ui h3 	{
+	font-family: "Trebuchet MS", Helvetica, sans-serif;
+    font-size: 15px;
+	margin-top: 5px;
+	text-transform: none;
+}
+
+.cbb-modal-dialog .max-upload-size,
+.cbb-modal-dialog .max-image-size {
+	font-size: 0.9em;
+}
+
+.cbb-modal-dialog .upload-inline-status {
+	left: 50%;
+	position: relative;
+	top: 50%;
+	width: 50%;
+	transform: translate(-50%, -50%);
+}
+
+.cbb-modal-dialog .cbb-dialog-sidebar .media-thumbnail {
+	max-width: 70%;
+    margin: 10px auto;
+    text-align: center;
+}
+
+.cbb-modal-dialog .cbb-dialog-sidebar .media-thumbnail img {
+	max-width: 100%;
+	height: auto;
+}
+
+.cbb-modal-dialog .cbb-dialog-sidebar .iconic .media-thumbnail i {
+	display: inline-block;
+	font-size: 50px;
+	margin-top: 25px;
+}
+
+.cbb-modal-dialog .attachment-info {
+    overflow: hidden;
+    min-height: 60px;
+    line-height: 18px;
+    color: #666;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 11px;
+}
+
+.cbb-modal-dialog .iconic .attachment-info {
+	border-bottom: none;
+}
+
+.cbb-modal-dialog .attachment-details .setting {
+    display: block;
+    width: 100%;
+    margin: 1px 0;
+}
+
+.cbb-modal-dialog .attachment-details .setting .name {
+    max-width: 100%;
+    display: block;
+    min-height: 22px;
+    padding-top: 8px;
+    line-height: 16px;
+    font-weight: 400;
+    color: #666;
+    margin-right: 4%;
+    font-size: 12px;
+    word-wrap: break-word;
+}
+
+.cbb-modal-dialog .attachment-details .setting input, .attachment-details .setting textarea {
+    width: 100%;
+	padding: 6px 8px;
+}
+
+.cbb-modal-dialog .attachment-details .cbb-btn {
+    display: block;
+    margin: 10px auto 0 auto;
+}
+
+.cbb-modal-dialog .media-embed {
+	padding: 10px;
+}
+
+.cbb-modal-dialog .media-embed .embed-url {
+	display: block;
+	position: relative;
+	margin-top: 15px;
+}
+
+.cbb-modal-dialog .media-embed .embed-url input {
+	font-size: 12px;
+	padding: 10px 35px 10px 10px;
+	width: 100%;
+}
+
+.cbb-modal-dialog .media-embed .embed-url .spinner {
+	margin: 0;
+    position: absolute;
+    top: 8px;
+    right: 25px;
+}
+
+.cbb-modal-dialog .media-embed-submit {
+	text-align: center;
+}
+
+.cbb-modal-dialog .media-embed-submit > label {
+	display: block;
+    margin: 20px 0;
+}
+
+/* RTL Support
+----------------------------------*/
+.rtl .cbb-media-attachments .attachment {
+	float: right;
+}
+
+.rtl .cbb-media-attachments .attachment .media-check {
+	left: -8px;
+	right: unset;
+}
+
+/* Dark Themes
+----------------------------------*/
+.dark-theme .cbb-modal-dialog .attachment,
+.dark-theme .cbb-modal-dialog .attachment-info,
+.dark-theme .cbb-modal-dialog .attachment-details .setting .name {
+	color: #ccc;
+}
+
+.dark-theme .cbb-modal-dialog .media-preview {
+	background-color: #404040;
+}
+
+.dark-theme .cbb-modal-dialog .attachment .media-check {
+	border-color: #252525;
+}
+
+.dark-theme .cbb-modal-dialog .attachment.active .media-check {
+    background-color: #2d9a31;
+}
+
+/* Responsive
+----------------------------------*/
+@media only screen and (max-width: 1440px) {
+	.cbb-modal-dialog .attachment { width: 14%; }
+}
+
+@media only screen and (max-width: 1165px) {
+	.cbb-modal-dialog .attachment { width: 13.7%; }
+}
+
+@media only screen and (max-width: 1124px) {
+	.cbb-modal-dialog .attachment { width: 13.3%; }
+}
+
+@media only screen and (max-width: 600px) {
+	.cbb-media-seeker {
+		flex-direction: column;
+		align-items: center;
+	}
+
+	.cbb-modal-dialog .has-seekerbar .cbb-media-attachments {
+		top: 90px;
+	}
+}
+
+@media only screen and (max-width: 480px) {
+	.cbb-modal-dialog .attachment { width: 12%; }
+}
+
+@media only screen and (max-width: 450px) {
+	.cbb-modal-dialog .attachment .media-check {
+		font-size: 8px;
+		line-height: 16px;
+		height: 20px;
+		width: 20px;
+	}
+}
+
+@media only screen and (max-width: 350px) {
+	.cbb-modal-dialog .attachment { width: 11%; }
+}

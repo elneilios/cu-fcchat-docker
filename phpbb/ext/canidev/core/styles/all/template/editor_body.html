@@ -1,0 +1,60 @@
+
+{% if S_EDITOR_ID %}
+	{% if S_EDITOR_NAME %}
+	<div class="editor-wrapper">
+		<textarea id="editor-{{ S_EDITOR_ID }}" name="{{ S_EDITOR_NAME }}" class="cbb-inputbox" rows="{{ S_EDITOR_ROWS }}">{{ S_EDITOR_CONTENT }}</textarea>
+	{% endif %}
+
+	<script type="text/html" id="tpl-editor-bbcodes-{{ S_EDITOR_ID }}">
+		<button type="button" title="{{ lang('BBCODE_B_HELP') }}" data-code="b"><i class="fa fa-bold fa-fw" aria-hidden="true"></i></button>
+		<button type="button" title="{{ lang('BBCODE_I_HELP') }}" data-code="i"><i class="fa fa-italic fa-fw" aria-hidden="true"></i></button>
+		<button type="button" title="{{ lang('BBCODE_U_HELP') }}" data-code="u"><i class="fa fa-underline fa-fw" aria-hidden="true"></i></button>
+		<button type="button" title="{{ lang('BBCODE_Q_HELP') }}" data-code="quote"><i class="fa fa-quote-left fa-fw" aria-hidden="true"></i></button>
+		<button type="button" title="{{ lang('BBCODE_C_HELP') }}" data-code="code"><i class="fa fa-code fa-fw" aria-hidden="true"></i></button>
+		<button type="button" title="{{ lang('BBCODE_L_HELP') }}" data-code="list"><i class="fa fa-list fa-fw" aria-hidden="true"></i></button>
+		<button type="button" title="{{ lang('BBCODE_O_HELP') }}" data-code="list=1"><i class="fa fa-list-ol fa-fw" aria-hidden="true"></i></button>
+		<button type="button" title="{{ lang('BBCODE_LISTITEM_HELP') }}" data-code="*"><i class="fa fa-asterisk fa-fw" aria-hidden="true"></i></button>
+		<button type="button" title="{{ lang('BBCODE_P_HELP') }}" data-code="img"><i class="fa fa-image fa-fw" aria-hidden="true"></i></button>
+		{% if S_BBCODE_URL %}
+		<button type="button" title="{{ lang('BBCODE_W_HELP') }}" data-code="url"><i class="fa fa-link fa-fw" aria-hidden="true"></i></button>
+		{% endif %}
+		<button type="button" title="{{ lang('BBCODE_S_HELP') }}" data-code="color"><i class="fa fa-tint fa-fw" aria-hidden="true"></i></button>
+		<select class="cbb-inputbox" title="{{ lang('BBCODE_F_HELP') }}" data-code="size">
+			<option value="50">{{ lang('FONT_TINY') }}</option>
+			<option value="85">{{ lang('FONT_SMALL') }}</option>
+			<option value="100" selected="selected">{{ lang('FONT_NORMAL') }}</option>
+		{% if not MAX_FONT_SIZE or MAX_FONT_SIZE >= 150 %}
+			<option value="150">{{ lang('FONT_LARGE') }}</option>
+			{% if not MAX_FONT_SIZE or MAX_FONT_SIZE >= 200 %}
+			<option value="200">{{ lang('FONT_HUGE') }}</option>
+			{% endif %}
+		{% endif %}
+		</select>
+
+	{% if S_SHOW_REMOVEFORMAT %}
+		<button type="button" title="{{ lang('REMOVE_FORMAT') }}" data-code="removeformat"><i class="fa fa-eraser fa-fw" aria-hidden="true"></i></button>
+	{% endif %}
+
+	{% for custom_tag in loops.editor_custom_tag %}
+		{% if custom_tag.BBCODE_CUSTOM_TEMPLATE %}
+			{{ custom_tag.BBCODE_CUSTOM_TEMPLATE }}
+		{% else %}
+			<button type="button" data-code="{{ custom_tag.BBCODE_CODE }}" data-tag="{{ custom_tag.BBCODE_TAG }}" data-custom="1" title="{{ custom_tag.BBCODE_HELPLINE }}">{{ custom_tag.BBCODE_ICON ? custom_tag.BBCODE_ICON : custom_tag.BBCODE_TAG }}</button>
+		{% endif %}
+	{% endfor %}
+
+		<button type="button" data-menu="custom-bbcodes" class="dropdown-select"><i class="fa fa-bars fa-fw" aria-hidden="true"></i></button>
+	</script>
+
+	{% if S_EDITOR_NAME %}
+		<script>
+			window._jPostponed = window._jPostponed || [];
+			window._jPostponed.push(function() {
+				$('#editor-{{ S_EDITOR_ID }}').cbbEditorWrapper({{ S_EDITOR_OPTIONS }});
+			});
+		</script>
+	</div>
+	{% else %}
+		<script type="application/json" id="editor-options-{{ S_EDITOR_ID }}">{{ S_EDITOR_OPTIONS }}</script>
+	{% endif %}
+{% endif %}

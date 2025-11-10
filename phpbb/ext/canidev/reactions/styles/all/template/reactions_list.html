@@ -1,0 +1,40 @@
+
+<div class="reactions-list">
+	<div class="tab-header">
+	{% for tab in loops.tab %}
+		<a href="#" data-id="{{ tab.S_ID }}" data-color="{{ tab.S_COLOR }}"{% if tab.IS_ACTIVE %} class="active"{% endif %} title="{{ tab.S_TITLE }}">
+			{% if tab.S_IMAGE %}<img src="{{ tab.S_IMAGE }}" alt="{{ tab.S_TITLE }}" />{% endif %}
+
+			{% if tab.S_ID == 0 %}
+				<span>{{ tab.S_TITLE }} (<span class="tab-counter">{{ tab.S_COUNT }}</span>)</span>
+			{% else %}
+				<span class="tab-counter">{{ tab.S_COUNT }}</span>
+			{% endif %}
+		</a>
+	{% endfor %}
+	</div>
+
+{% for tab in loops.tab %}
+	<ul class="tab-content{% if not tab.IS_ACTIVE %} cbb-helper-hidden{% endif %}" data-id="{{ tab.S_ID }}">
+	{% for item in tab.items %}
+		<li {{ item.S_ATTR }}>
+			<div class="reaction-row-pictures">
+				<div class="user-avatar cbb-circular-avatar">
+					{% if item.USER_AVATAR %}{{ item.USER_AVATAR }}{% else %}<span class="cbb-no-avatar"></span>{% endif %}
+				</div>
+				<img class="reaction-image" src="{{ item.S_REACTION_IMAGE }}" alt="{{ item.S_REACTION_TITLE }}" />
+			</div>
+			<div class="reaction-row-info">
+				<div class="cbb-helper-text">{{ item.S_USERNAME_FULL }}</div>
+				<div>{% if item.USER_RANK_IMG %}{{ item.USER_RANK_IMG }}{% elseif item.USER_RANK_TITLE %}<span class="rank-title">{{ item.USER_RANK_TITLE }}</span>{% endif %}</div>
+			</div>
+			<div class="reaction-row-time">{{ item.S_REACTION_TIME }}</div>
+			<div class="reaction-row-actions">
+				{% if item.U_DELETE %}<a href="{{ item.U_DELETE }}" class="cbb-btn icon-only" data-ajaxify="custom"><i class="fa fa-close"></i></a>{% endif %}
+				{{ item.CUSTOM_ACTIONS }}
+			</div>
+		</li>
+	{% endfor %}
+	</ul>
+{% endfor %}
+</div>

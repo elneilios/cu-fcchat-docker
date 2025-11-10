@@ -1,0 +1,55 @@
+{% include 'overall_header.html' %}
+
+<a name="maincontent"></a>
+
+{% if U_BACK %}<a href="{{ U_BACK }}" style="float: {{ S_CONTENT_FLOW_END }};">&laquo; {{ lang('BACK') }}</a>{% endif %}
+
+<h1>{{ lang('ACP_REACTIONS_MANAGE') }}</h1>
+<p>{{ lang('ACP_REACTIONS_MANAGE_EXPLAIN') }}</p>
+
+{% if S_ERROR %}
+	<div class="errorbox">
+		<h3>{{ lang('WARNING') }}</h3>
+		<p>{{ S_ERROR }}</p>
+	</div>
+{% endif %}
+
+<form id="acp_reactions" method="post" action="{{ U_ACTION }}">
+{% if IN_REACTION %}
+	{% include '@canidev_core/acp_options.html' %}
+{% else %}
+
+	<div class="cbb-submit-buttons">
+		<a href="{{ U_REACTION_ADD }}" class="cbb-btn default-btn">{{ lang('REACTION_ADD') }}</a>
+	</div>
+
+	<div id="no-reactions-label" class="successbox{{ reactions|length > 0 ? ' cbb-helper-hidden' : '' }}">
+		<p>{{ lang('NO_REACTIONS') }}</p>
+	</div>
+
+	<div class="cbb-table-acp acp-reactions-table{{ reactions|length == 0 ? ' cbb-helper-hidden' : '' }}">
+	{% for reaction in reactions %}
+		<div id="reaction-{{ reaction.ID }}">
+			<div class="handle"><i class="fa fa-sort"></i></div>
+			<div class="reaction-title"><a href="{{ reaction.U_EDIT }}"><img src="{{ reaction.S_IMAGE_URL }}" alt="{{ reaction.S_TITLE_RAW }}" />{{ reaction.S_TITLE }}</a></div>
+			<div class="reaction-score"><span>{{ reaction.S_SCORE }}</span></div>
+			<div class="column-switch">
+				<label class="cbb-switch" title="{{ lang('ENABLE_DISABLE') }}">
+					<input type="checkbox" data-url="{{ reaction.U_STATUS }}" {% if reaction.IS_ENABLED %} checked="checked"{% endif %} />
+					<span class="slider"></span>
+				</label>
+			</div>
+			<div class="column-actions">
+				<a href="{{ reaction.U_DEFAULT }}" title="{{ lang('SET_AS_DEFAULT') }}" data-request="ajax" class="js-set-default {{ reaction.IS_DEFAULT ? ' active' : '' }}"><i class="fa fa-thumb-tack"></i></a>
+				<a href="{{ reaction.U_EDIT }}" title="{{ lang('EDIT') }}"><i class="fa fa-pencil"></i></a>
+				<a href="{{ reaction.U_DELETE }}" title="{{ lang('DELETE') }}" data-request="ajax"><i class="fa fa-trash"></i></a>
+				{{ reaction.S_HIDDEN_FIELDS }}
+			</div>
+		</div>
+	{% endfor %}
+	</div>
+
+{% endif %}
+</form>
+
+{% include 'overall_footer.html' %}

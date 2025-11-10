@@ -1,0 +1,13 @@
+<div id="confirm-box" title="{{ lang('REPORT_TITLE') }}" data-width="600">
+	<form action="{{ S_CONFIRM_ACTION }}">
+		<div class="cbb-dialog-content editor-wrapper">
+			<div>{{ lang('REPORT_EXPLAIN') }}</div><br />
+			<textarea name="description" class="cbb-inputbox" rows="8"></textarea>
+		</div>
+		<div class="cbb-dialog-buttons">
+			<button class="cbb-btn" value="submit" data-confirm="{{ YES_VALUE }}">{{ lang('SEND') }}</button>
+			<button class="cbb-btn" value="close">{{ lang('CANCEL') }}</button>
+			{{ S_HIDDEN_FIELDS }}
+		</div>
+	</form>
+</div>

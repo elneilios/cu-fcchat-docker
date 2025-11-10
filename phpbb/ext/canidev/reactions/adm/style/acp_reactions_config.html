@@ -1,0 +1,19 @@
+{% include 'overall_header.html' %}
+
+<a name="maincontent"></a>
+
+<h1>{{ lang('ACP_REACTIONS_CONFIG') }}</h1>
+<p>{{ lang('ACP_REACTIONS_CONFIG_EXPLAIN') }}</p>
+
+{% if S_ERROR %}
+	<div class="errorbox">
+		<h3>{{ lang('WARNING') }}</h3>
+		<p>{{ S_ERROR }}</p>
+	</div>
+{% endif %}
+
+<form id="acp_reactions" method="post" action="{{ U_ACTION }}">
+	{% include '@canidev_core/acp_options.html' %}
+</form>
+
+{% include 'overall_footer.html' %}

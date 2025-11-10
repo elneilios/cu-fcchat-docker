@@ -1,0 +1,34 @@
+services:
+    canidev.reactions.controller:
+        class: canidev\reactions\controller\main
+        arguments:
+            - '@auth'
+            - '@config'
+            - '@dbal.conn'
+            - '@dispatcher'
+            - '@language'
+            - '@canidev.reactions.notifications.manager'
+            - '@path_helper'
+            - '@canidev.reactions.manager'
+            - '@request'
+            - '@template'
+            - '@user'
+            - '%core.root_path%'
+            - '%core.php_ext%'
+            - '%tables.canidev.reactions_data%'
+    
+    canidev.reactions.controller.admin.config:
+        class: canidev\reactions\controller\admin_config
+        parent: canidev.core.controller.acp
+        arguments:
+            - '@dispatcher'
+
+    canidev.reactions.controller.admin.manage:
+        class: canidev\reactions\controller\admin_manage
+        parent: canidev.core.controller.acp
+        arguments:
+            - '@service_container'
+            - '@dbal.conn'
+            - '@dispatcher'
+            - '%tables.canidev.reactions%'
+            - '%tables.canidev.reactions_data%'
