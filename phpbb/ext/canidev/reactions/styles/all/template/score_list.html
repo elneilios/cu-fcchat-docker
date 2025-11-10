@@ -1,0 +1,18 @@
+{% if not postrow is defined %}
+	{% set postrow = score_rows|first %}
+{% endif %}
+
+<div class="reaction-score-list{{ not postrow.reaction_scores|length ? ' empty' : '' }}" {{ postrow.REACTION_LIST_ATTR }}>
+	<div class="list-label">
+	{% if postrow.U_REACTION_SCORE_ALL %}
+		<a href="{{ postrow.U_REACTION_SCORE_ALL }}">{{ postrow.REACTION_SCORE_LABEL }}</a>
+	{% else %}
+		<span>{{ postrow.REACTION_SCORE_LABEL }}</span>
+	{% endif %}
+	</div>
+	<div class="list-scores">
+		{% for score in postrow.reaction_scores %}
+			<a href="{{ score.U_VIEW }}" title="{{ score.S_TITLE }}"><img src="{{ score.S_REACTION_IMAGE }}" alt="{{ score.S_REACTION_TITLE }}" /></a>
+		{% endfor %}
+	</div>
+</div>

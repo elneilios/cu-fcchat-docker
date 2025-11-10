@@ -1,0 +1,63 @@
+imports:
+    - { resource: controllers.yml }
+
+parameters:
+    tables.canidev.reactions: '%core.table_prefix%reactions'
+    tables.canidev.reactions_data: '%core.table_prefix%reactions_data'
+
+services:
+    canidev.reactions.listener:
+        class: canidev\reactions\event\listener
+        arguments:
+            - '@auth'
+            - '@cache.driver'
+            - '@config'
+            - '@dbal.conn'
+            - '@language'
+            - '@canidev.reactions.notifications.manager'
+            - '@canidev.reactions.manager'
+            - '@canidev.core.template'
+            - '@user'
+            - '%tables.canidev.reactions%'
+            - '%tables.canidev.reactions_data%'
+        tags:
+            - { name: event.listener }
+
+    canidev.reactions.notification.post:
+        class: canidev\reactions\notification\post
+        shared: false
+        parent: notification.type.base
+        calls:
+            - [set_notifications_table, ['%tables.notifications%']]
+            - [set_user_loader, ['@user_loader']]
+        tags:
+            - { name: notification.type }
+
+    canidev.reactions.manager:
+        class: canidev\reactions\libraries\reaction_manager
+        arguments:
+            - '@auth'
+            - '@cache.driver'
+            - '@config'
+            - '@service_container'
+            - '@dbal.conn'
+            - '@dispatcher'
+            - '@language'
+            - '@routing.helper'
+            - '@user'
+            - '%tables.canidev.reactions%'
+            - '%tables.canidev.reactions_data%'
+
+    canidev.reactions.media_events:
+        class: canidev\reactions\event\media
+        arguments:
+            - '@language'
+            - '@user'
+    
+    canidev.reactions.notifications.manager:
+        class: canidev\reactions\libraries\notification_manager
+        arguments:
+            - '@dbal.conn'
+            - '@notification_manager'
+            - '@user'
+            - '%tables.notifications%'

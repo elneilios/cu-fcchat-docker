@@ -1,0 +1,27 @@
+{% if launcher_need_wrapper %}<ul class="reaction-launcher-wrapper">{% endif %}
+
+{% if not postrow is defined %}
+	{% set postrow = score_rows|first %}
+{% endif %}
+
+{% if postrow.CAN_USE_REACTIONS %}
+	<li class="reactions-launcher" data-skip-responsive="true" data-post-id="{{ postrow.POST_ID }}">
+		<a href="{{ postrow.U_REACTION }}" title="" rel="nofollow" class="reaction-button{{ not postrow.REACTION_HAS_MINE ? ' default-icon' : '' }} button button-icon-only">
+			{{ postrow.REACTION_LAUNCHER_ICON }}
+		</a>
+
+		<div class="cbb-helper-hidden">
+			<ul class="reaction-selector">
+			{% for reaction in reactions %}
+				<li>
+					<a href="#" data-reaction-id="{{ reaction.ID }}" title="{{ reaction.S_TITLE }}" rel="nofollow">
+						<img src="{{ reaction.S_IMAGE_URL }}" alt="{{ reaction.S_TITLE }}" />
+					</a>
+				</li>
+			{% endfor %}
+			</ul>
+		</div>
+	</li>
+{% endif %}
+
+{% if launcher_need_wrapper %}</ul>{% endif %}

@@ -1,0 +1,45 @@
+imports:
+  - { resource: controllers.yml }
+
+services:
+  canidev.core.listener:
+      class: canidev\core\event\listener
+      arguments:
+        - '@cache.driver'
+        - '@config'
+        - '@service_container'
+        - '@dispatcher'
+        - '@language'
+        - '@request'
+        - '@canidev.core.template'
+        - '@user'
+        - '%core.root_path%'
+        - '%core.php_ext%'
+      tags:
+          - { name: canidev.core.listener }
+
+  canidev.core.lib:
+    class: canidev\core\lib
+    arguments:
+      - '@service_container'
+  
+  canidev.core.template:
+    class: canidev\core\template
+    arguments:
+      - '@config'
+      - '@filesystem'
+      - '@language'
+      - '@path_helper'
+      - '@symfony_request'
+      - '@template'
+      - '@template.twig.environment'
+    
+  canidev.core.text_parser:
+    class: canidev\core\TextParser
+    arguments:
+      - '@service_container'
+
+  canidev.core.tools:
+    class: canidev\core\tools
+    arguments:
+      - '@service_container'

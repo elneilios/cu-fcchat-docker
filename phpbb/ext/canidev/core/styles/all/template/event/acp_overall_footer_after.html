@@ -1,0 +1,25 @@
+{% if not definition.CBBCORE_JS_LOADED %}
+	{% if U_HELP and not U_BACK and not MESSAGE_TEXT %}
+		<script>
+		// <![CDATA[
+			window.__helpIcon = {
+				title	: '{{ lang('DOCUMENTATION_AND_SUPPORT')|escape('js') }}',
+				url		: '{{ U_HELP }}'
+			};
+
+		{% if U_REPORT %}
+			window.__report = {
+				title	: '{{ lang('REPORT_TITLE')|escape('js') }}',
+				url		: '{{ U_REPORT }}'
+			};
+		{% endif %}
+		// ]]>
+		</script>
+	{% endif %}
+
+	{% for script in loops.core_script %}
+	<script{{ script.PARAMS }}>{{ script.DATA }}</script>
+	{% endfor %}
+	
+	{% DEFINE CBBCORE_JS_LOADED = 1 %}
+{% endif %}

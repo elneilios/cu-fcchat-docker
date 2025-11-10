@@ -1,0 +1,7 @@
+{% if CANIDEV_CORE_STARTED %}
+	<script>
+		(function($) {
+			cbbCore.initService('reactions', {{ REACTIONS_OPTIONS }});
+		})(jQuery);
+	</script>
+{% endif %}

@@ -1,0 +1,25 @@
+
+	<div class="cbb-smiley-container">
+	{% for smiley in loops.smileyrow %}
+		<a href="#" data-code="{{ smiley.SMILEY_CODE }}">
+			<img src="{{ smiley.SMILEY_IMG }}" width="{{ smiley.SMILEY_WIDTH }}" height="{{ smiley.SMILEY_HEIGHT }}" alt="{{ smiley.SMILEY_CODE }}" title="{{ smiley.SMILEY_DESC }}" />
+		</a>
+	{% endfor %}
+	</div>
+
+{% if smiley_pagination|length %}
+	<div class="pagination">
+		<ul>
+		{% for pagination in loops.smiley_pagination %}
+			{% if pagination.S_IS_CURRENT %}
+			<li class="active"><span>{{ pagination.PAGE_NUMBER }}</span></li>
+			{% elseif pagination.S_IS_ELLIPSIS %}
+			<li class="ellipsis" role="separator"><span>{{ lang('ELLIPSIS') }}</span></li>
+			{% elseif not pagination.S_IS_NEXT and not pagination.S_IS_PREV %}
+			<li><a href="{{ pagination.PAGE_URL }}" role="button">{{ pagination.PAGE_NUMBER }}</a></li>
+			{% endif %}
+		{% endfor %}
+		</ul>
+	</div>
+	<div class="clear"></div>
+{% endif %}

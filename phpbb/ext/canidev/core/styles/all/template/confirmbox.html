@@ -1,0 +1,10 @@
+<div id="confirm-box" title="{{ MESSAGE_TITLE }}">
+	<form action="{{ S_CONFIRM_ACTION }}">
+		<div class="cbb-dialog-content">{{ MESSAGE_TEXT }}</div>
+		<div class="cbb-dialog-buttons">
+			<button class="cbb-btn" value="submit" data-confirm="{{ YES_VALUE }}">{{ YES_VALUE }}</button>
+			<button class="cbb-btn" value="close">{{ lang('NO') }}</button>
+			{{ S_HIDDEN_FIELDS }}
+		</div>
+	</form>
+</div>

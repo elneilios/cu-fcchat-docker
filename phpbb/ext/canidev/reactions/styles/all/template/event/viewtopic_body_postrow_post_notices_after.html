@@ -1,0 +1,8 @@
+<div class="reaction-post-bar">
+	{% include "@canidev_reactions/score_list.html" %}
+
+	{% if REACTIONS_BTN_POSITION == 'below' %}
+		{% set launcher_need_wrapper = true %}
+		{% include "@canidev_reactions/launcher_button.html" %}
+	{% endif %}
+</div>

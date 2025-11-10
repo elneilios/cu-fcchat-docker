@@ -1,0 +1,4 @@
+canidev_reactions_controller:
+    path: /reactions
+    defaults:
+        _controller: canidev.reactions.controller:display

@@ -1,0 +1,11 @@
+Subject: {USERNAME} has reacted to your post
+
+Hi,
+
+"{USERNAME}" has reacted to a post from you on "{SITENAME}".
+
+To view the post, use this link:
+{U_LINK}
+
+
+{EMAIL_SIG}

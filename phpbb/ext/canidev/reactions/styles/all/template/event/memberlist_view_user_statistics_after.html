@@ -1,0 +1,10 @@
+
+{% if TOTAL_REACTIONS is defined %}
+	<dt>{{ lang('TOTAL_REACTIONS') ~ lang('COLON') }}</dt>
+	<dd>{{ TOTAL_REACTIONS }}</dd>
+{% endif %}
+
+{% if REACTIONS_USER_SCORE is defined %}
+	<dt>{{ lang('REACTIONS_USER_SCORE') ~ lang('COLON') }}</dt>
+	<dd>{{ REACTIONS_USER_SCORE }}</dd>
+{% endif %}

@@ -1,0 +1,187 @@
+<div class="cbb-modal-dialog media">
+	<ul class="cbb-dialog-menu"></ul>
+
+	<div class="cbb-dialog-header">
+		<h1></h1>
+		<a href="#" data-action="close" class="cbb-dialog-close">
+			<span class="fa fa-remove"></span>
+		</a>
+	</div>
+
+	<div class="cbb-dialog-content">
+		<div class="cbb-dialog-sidebar"></div>
+		<div class="cbb-section-content js-section-content"></div>
+	</div>
+		
+	<div class="cbb-dialog-toolbar">
+		<div class="media-toolbar-secondary cbb-helper-hidden">
+			<button type="button" class="cbb-btn cbb-helper-hidden" data-action="copy" title="{{ lang('COPY_TO_LIST') }}"><span class="fa fa-copy"></span></button>
+			<button type="button" class="cbb-btn cbb-helper-hidden" data-action="delete-soft" title="{{ lang('DELETE_FROM_LIST') }}"><span class="fa fa-close"></span></button>
+			<button type="button" class="cbb-btn cbb-helper-hidden" data-action="delete" title="{{ lang('DELETE_PERMANENTLY') }}"><span class="fa fa-trash"></span></button>
+			<span class="count">{{ lang('SELECTED_COUNT') }}</span>
+		</div>
+			
+		<div class="media-toolbar-primary">
+			<button type="button" class="cbb-btn" data-action="submit" disabled>{{ S_SUBMIT_LABEL }}</button>
+		</div>
+	</div>
+
+	<script type="text/html" id="tpl-seeker-bar">
+		<div class="cbb-media-seeker">
+			<div class="cbb-group">
+				<input type="text" class="cbb-inputbox" name="keywords" value="" />
+				<a href="#" class="cbb-btn" data-action="search">{{ lang('SEARCH') }}</a>
+			</div>
+
+			<div class="media-pagination cbb-group"></div>
+		</div>
+	</script>
+
+	<script type="text/html" id="tpl-menu-item">
+		<li><a href="#"><span class="fa <%icon%>"></span> <span class="item-title"><%title%></span></a></li>
+	</script>
+
+	<script type="text/html" id="tpl-attachment-row">
+		<li role="checkbox" data-id="<%id%>" class="attachment">
+			<div class="media-preview">
+				<div class="media-thumbnail">
+					<img src="<%filename%>" alt="" />
+				</div>
+			</div>
+
+			<button type="button" class="button-link media-check">
+				<i class="fa fa-check" aria-hidden="true"></i>
+			</button>
+		</li>
+	</script>
+	
+	<script type="text/html" id="tpl-icon-row">
+		<li role="checkbox" data-id="<%id%>" class="attachment iconic">
+			<div class="media-preview">
+				<div class="media-thumbnail">
+					<i class="fa <%code%>" aria-hidden="true"></i>
+				</div>
+			</div>
+
+			<button type="button" class="button-link media-check">
+				<i class="fa fa-check" aria-hidden="true"></i>
+			</button>
+		</li>
+	</script>
+	
+	<script type="text/html" id="tpl-attachment-none">
+		<li class="cbb-message cbb-state-highlight">{{ lang('NO_ITEMS') }}</li>
+	</script>
+	
+	<script type="text/html" id="tpl-details-image-editable">
+		<div class="attachment-details">
+			<h3>{{ lang('IMAGE_DETAILS') }}</h3>
+			<div class="attachment-info">
+				<div class="media-thumbnail">
+					<img src="<%filename%>" alt="" />
+				</div>
+				<div class="details">
+					<div class="uploaded"><%date%></div>
+					<div class="file-size"><%filesize%></div>
+					<div class="dimensions">{{ lang('IMAGE_DIMENSIONS') }}</div>
+				</div>
+			</div>
+
+			<label class="setting">
+				<span class="name">{{ lang('IMAGE_URL') }}</span>
+				<input type="text" value="<%url%>" class="cbb-inputbox" readonly />
+			</label>
+			
+			<label class="setting">
+				<span class="name">{{ lang('IMAGE_TITLE') }}</span>
+				<input type="text" value="<%title%>" class="cbb-inputbox" data-setting="title" />
+			</label>
+			
+			<label class="setting">
+				<span class="name">{{ lang('IMAGE_DESCRIPTION') }}</span>
+				<textarea data-setting="description" class="cbb-inputbox"><%description%></textarea>
+			</label>
+			
+			<button type="button" class="cbb-btn" data-action="update">{{ lang('UPDATE') }}</button>
+		</div>
+	</script>
+	
+	<script type="text/html" id="tpl-details-image">
+		<div class="attachment-details">
+			<h3>{{ lang('IMAGE_DETAILS') }}</h3>
+			<div class="attachment-info">
+				<div class="media-thumbnail">
+					<img src="<%filename%>" alt="" />
+				</div>
+				<div class="details">
+					<div class="file-size"><%filesize%></div>
+					<div class="dimensions">{{ lang('IMAGE_DIMENSIONS') }}</div>
+				</div>
+			</div>
+
+			<label class="setting">
+				<span class="name">{{ lang('IMAGE_URL') }}</span>
+				<input type="text" value="<%url%>" class="cbb-inputbox" readonly />
+			</label>
+		</div>
+	</script>
+	
+	<script type="text/html" id="tpl-details-icon">
+		<div class="attachment-details iconic">
+			<h3>{{ lang('ICON_PREVIEW') }}</h3>
+			<div class="attachment-info">
+				<div class="media-thumbnail">
+					<i class="fa <%code%>" aria-hidden="true"></i>
+				</div>
+			</div>
+		</div>
+	</script>
+	
+	<script type="text/html" id="tpl-section-upload">
+		<div class="upload-ui">
+			<div class="uploader-inline">
+				<div class="cbb-browser-button">
+					<button type="button" class="cbb-btn">
+						<span>{{ lang('SELECT_FILES') }}</span>
+					</button>
+					<input type="file" name="file[]" multiple />
+				</div>
+				<p>{{ lang('OR') }}</p>
+				<h3>{{ lang('FILES_DRAG') }}</h3>
+
+				{% if S_MAX_FILESIZE %}<p class="max-upload-size">{{ S_MAX_FILESIZE }}</p>{% endif %}
+				{% if S_MAX_IMAGESIZE %}<p class="max-image-size">{{ S_MAX_IMAGESIZE }}</p>{% endif %}
+			</div>
+			<div class="upload-inline-status cbb-helper-hidden">
+				<p>{{ lang('UPLOADING_FILES') }}</p>
+				<div class="cbb-progress-bar"><div class="inner" role="progressbar"></div></div>
+			</div>
+			<div class="upload-drop-label">
+				<p>{{ lang('FILES_DROP') }}</p>
+				<i class="fa fa-arrow-circle-o-down" aria-hidden="true"></i>
+			</div>
+		</div>
+	</script>
+	
+	<script type="text/html" id="tpl-section-insert">
+		<div class="media-embed">
+			<label class="embed-url">
+				<input type="url" class="cbb-inputbox" placeholder="https://" />
+				<span class="spinner cbb-loading cbb-helper-hidden"><span></span></span>
+			</label>
+			
+			<div class="media-embed-submit cbb-helper-hidden">
+			{% if CAN_INSERT_COPY %}
+				<label>
+					<input type="checkbox" name="copy" value="1" />
+					{{ lang('CREATE_SERVER_COPY') }}
+				</label>
+				{% if S_MAX_IMAGESIZE %}<p class="max-image-size">{{ S_MAX_IMAGESIZE }}</p>{% endif %}
+			{% endif %}
+				<div class="cbb-browser-button">
+					<button type="button" class="cbb-btn">{{ lang('PROCCESS') }}</button>
+				</div>
+			</div>
+		</div>
+	</script>
+</div>

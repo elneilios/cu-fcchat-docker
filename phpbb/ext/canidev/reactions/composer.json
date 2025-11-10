@@ -1,0 +1,33 @@
+{
+	"name": "canidev/reactions",
+	"type": "phpbb-extension",
+	"description": "",
+	"homepage": "https://www.canidev.com",
+	"version": "1.0.4",
+	"time": "2025-04-01",
+	"keywords": ["phpbb", "extension", "canidev", "reactions"],
+	"license": "CreativeCommons Attribution-NonCommercial v4.0",
+	"authors": [
+		{
+			"name": "CaniDev",
+			"email": "contact@canidev.com",
+			"homepage": "https://www.canidev.com",
+			"role": "Lead Developer"
+		}
+	],
+	"require": {
+		"php": ">=5.6"
+	},
+	"extra": {
+		"display-name": "cBB Reactions",
+		"soft-require": {
+			"phpbb/phpbb": ">=3.2.0"
+		},
+		"version-check": {
+			"host": "www.canidev.com",
+			"directory": "/store/cbb-reactions",
+			"filename": "version",
+			"ssl": true
+		}
+	}
+}

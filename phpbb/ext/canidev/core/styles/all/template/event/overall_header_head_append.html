@@ -1,0 +1,11 @@
+{% if not definition.CBBCORE_CSS_LOADED %}
+	{% for css in loops.core_css %}
+	<link{{ css.PARAMS }}>
+	{% endfor %}
+
+	{% for style in loops.core_style %}
+	<style type="text/css"{{ style.PARAMS }}>{{ style.DATA }}</style>
+	{% endfor %}
+
+	{% DEFINE CBBCORE_CSS_LOADED = 1 %}
+{% endif %}

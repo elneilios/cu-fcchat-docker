@@ -1,0 +1,11 @@
+<ul class="cbb-menu">
+{% for tab in loops.tab %}
+	{% if tab.S_ID <> 0 %}
+	<li>
+		{% if tab.S_IMAGE %}<img src="{{ tab.S_IMAGE }}" alt="{{ tab.S_TITLE }}" />{% endif %}
+		<span>{{ tab.S_TITLE }}</span>
+		<span class="tab-counter">{{ tab.S_COUNT }}</span>
+	</li>
+	{% endif %}
+{% endfor %}
+</ul>

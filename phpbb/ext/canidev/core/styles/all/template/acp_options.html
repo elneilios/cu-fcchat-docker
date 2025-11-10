@@ -1,0 +1,29 @@
+	{% for option in options %}
+		{% if option.S_LEGEND or option.S_FIRST_ROW %}
+			{% if not option.S_FIRST_ROW %}</fieldset>{% endif %}
+			<fieldset>
+				{% if option.LEGEND %}<legend>{{ option.LEGEND }}</legend>{% endif %}
+		{% endif %}
+		
+		{% if not option.S_LEGEND %}
+			{% if option.INCLUDE %}
+				{% include option.INCLUDE %}
+			{% else %}
+			<dl{{ option.ID is defined ? ' id="option-' ~ option.ID ~ '"' : ''}}
+				{{ option.DISPLAY is defined and not option.DISPLAY ? ' class="cbb-helper-hidden"' : ''}}>
+				<dt><label for="{{ option.KEY }}">{{ option.TITLE ~ lang('COLON') }}</label>{% if option.S_EXPLAIN %}<br /><span>{{ option.S_EXPLAIN }}</span>{% endif %}</dt>
+				<dd>{{ option.CONTENT }}</dd>
+			</dl>
+			{% endif %}
+		{% endif %}
+		
+		{% if option.S_LAST_ROW %}</fieldset>{% endif %}
+	{% endfor %}
+
+{% if not display_submit_save is defined or display_submit_save == true %}
+	<div class="cbb-submit-buttons">
+		{{ S_FORM_TOKEN }}
+		{{ S_HIDDEN_FIELDS }}
+		<input class="cbb-btn default-btn" type="submit" name="submit" value="{{ lang('SAVE') }}" />
+	</div>
+{% endif %}
