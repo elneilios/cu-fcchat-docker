@@ -81,13 +81,21 @@ date.timezone = Europe/London
 EOL
 
 # ---------------------------
-# 7. Start SSH daemon
+# 7. Start SSH daemon (background)
 # ---------------------------
 echo "Starting SSH daemon..."
-/usr/sbin/sshd
+/usr/sbin/sshd &
 
 # ---------------------------
-# 8. Start Apache
+# 8. Set ServerName for Apache and start (only if not already running)
 # ---------------------------
+echo "Setting Apache ServerName..."
+echo "ServerName localhost" > /etc/httpd/conf.d/servername.conf
 echo "Starting Apache..."
-exec "$@"
+if ! pgrep -x httpd > /dev/null; then
+    exec "$@"
+else
+    echo "Apache is already running. Skipping start."
+    # Keep container alive if Apache is already running
+    tail -f /dev/null
+fi
