@@ -11,10 +11,14 @@
 *
 */
 
+use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Exception\ExceptionInterface;
+use Symfony\Component\Routing\Exception\RouteNotFoundException;
+
 /**
 */
 define('IN_PHPBB', true);
-define('IN_CRON', true);
 $phpbb_root_path = (defined('PHPBB_ROOT_PATH')) ? PHPBB_ROOT_PATH : './';
 $phpEx = substr(strrchr(__FILE__, '.'), 1);
 include($phpbb_root_path . 'common.' . $phpEx);
@@ -23,62 +27,53 @@ include($phpbb_root_path . 'common.' . $phpEx);
 $user->session_begin(false);
 $auth->acl($user->data);
 
-function output_image()
-{
-	// Output transparent gif
-	header('Cache-Control: no-cache');
-	header('Content-type: image/gif');
-	header('Content-length: 43');
-
-	echo base64_decode('R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==');
-
-	// Flush here to prevent browser from showing the page as loading while
-	// running cron.
-	flush();
-}
-
-// Thanks to various fatal errors and lack of try/finally, it is quite easy to leave
-// the cron lock locked, especially when working on cron-related code.
-//
-// Attempt to alleviate the problem by doing setup outside of the lock as much as possible.
-
 $cron_type = $request->variable('cron_type', '');
 
-// Comment this line out for debugging so the page does not return an image.
-output_image();
+$get_params_array = $request->get_super_global(\phpbb\request\request_interface::GET);
 
-/* @var $cron_lock \phpbb\lock\db */
-$cron_lock = $phpbb_container->get('cron.lock_db');
-if ($cron_lock->acquire())
+/* @var $http_kernel \Symfony\Component\HttpKernel\HttpKernel */
+$http_kernel = $phpbb_container->get('http_kernel');
+
+/* @var $symfony_request \phpbb\symfony_request */
+$symfony_request = $phpbb_container->get('symfony_request');
+
+/** @var \phpbb\controller\helper $controller_helper */
+$controller_helper = $phpbb_container->get('controller.helper');
+$cron_route = 'phpbb_cron_run';
+
+try
 {
-	/* @var $cron \phpbb\cron\manager */
-	$cron = $phpbb_container->get('cron.manager');
-
-	$task = $cron->find_task($cron_type);
-	if ($task)
-	{
-		/**
-		 * This event enables you to catch the task before it runs
-		 *
-		 * @event core.cron_run_before
-		 * @var	\phpbb\cron\task\wrapper	task	Current Cron task
-		 * @since 3.1.8-RC1
-		 */
-		$vars = array(
-			'task',
-		);
-		extract($phpbb_dispatcher->trigger_event('core.cron_run_before', compact($vars)));
-
-		if ($task->is_parametrized())
-		{
-			$task->parse_parameters($request);
-		}
-		if ($task->is_ready())
-		{
-			$task->run();
-		}
-	}
-	$cron_lock->release();
+	$response = new RedirectResponse(
+		$controller_helper->route($cron_route, $get_params_array, false),
+		Response::HTTP_MOVED_PERMANENTLY
+	);
+	$response->send();
+	$http_kernel->terminate($symfony_request, $response);
+	exit();
+}
+catch (RouteNotFoundException $exception)
+{
+	$error = 'ROUTE_NOT_FOUND';
+	$error_parameters = $cron_route;
+	$error_code = Response::HTTP_NOT_FOUND;
+}
+catch (ExceptionInterface $exception)
+{
+	$error = 'ROUTE_INVALID_MISSING_PARAMS';
+	$error_parameters = $cron_route;
+	$error_code = Response::HTTP_BAD_REQUEST;
+}
+catch (Throwable $exception)
+{
+	$error = $exception->getMessage();
+	$error_parameters = [];
+	$error_code = Response::HTTP_INTERNAL_SERVER_ERROR;
 }
 
-garbage_collection();
+$language = $phpbb_container->get('language');
+$response = new Response(
+	$language->lang($error, $error_parameters),
+	$error_code
+);
+$response->send();
+$http_kernel->terminate($symfony_request, $response);

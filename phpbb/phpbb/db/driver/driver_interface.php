@@ -16,6 +16,20 @@ namespace phpbb\db\driver;
 interface driver_interface
 {
 	/**
+	* Set value for load_time debug parameter
+	*
+	* @param bool $value
+	*/
+	public function set_debug_load_time($value);
+
+	/**
+	* Set value for sql_explain debug parameter
+	*
+	* @param bool $value
+	*/
+	public function set_debug_sql_explain($value);
+
+	/**
 	* Gets the name of the sql layer.
 	*
 	* @return string
@@ -275,11 +289,33 @@ interface driver_interface
 	public function cast_expr_to_bigint($expression);
 
 	/**
-	* Get last inserted id after insert statement
-	*
-	* @return	string		Autoincrement value of the last inserted row
-	*/
+	 * Gets the ID of the **last** inserted row immediately after an INSERT
+	 * statement.
+	 *
+	 * **Note**: Despite the name, the returned ID refers to the row that has
+	 * just been inserted, rather than the hypothetical ID of the next row if a
+	 * new one was to be inserted.
+	 *
+	 * The returned value can be used for selecting the item that has just been
+	 * inserted or for updating another table with an ID pointing to that item.
+	 *
+	 * Alias of `sql_last_inserted_id`.
+	 *
+	 * @deprecated 3.3.11-RC1 Replaced by sql_last_inserted_id(), to be removed in 4.1.0-a1
+	 *
+	 * @return	string|false	Auto-incremented value of the last inserted row
+	 */
 	public function sql_nextid();
+
+	/**
+	 * Gets the ID of the last inserted row immediately after an INSERT
+	 * statement. The returned value can be used for selecting the item that has
+	 * just been inserted or for updating another table with an ID pointing to
+	 * that item.
+	 *
+	 * @return	string|false	Auto-incremented value of the last inserted row
+	 */
+	public function sql_last_inserted_id();
 
 	/**
 	* Add to query count
@@ -450,4 +486,21 @@ interface driver_interface
 	* @return string	A SQL statement like: "IN (1, 2, 3, 4)" or "= 1"
 	*/
 	public function sql_in_set($field, $array, $negate = false, $allow_empty_set = false);
+
+	/**
+	* Quote identifiers used in sql query
+	*
+	* @param	string	$msg	String to be quoted
+	* @return	string		Quoted version of $msg
+	*/
+	public function sql_quote($msg);
+
+	/**
+	 * Ensure query ID can be used by cache
+	 *
+	 * @param resource|int|string $query_id Mixed type query id
+	 *
+	 * @return int|string Query id in string or integer format
+	 */
+	public function clean_query_id($query_id);
 }

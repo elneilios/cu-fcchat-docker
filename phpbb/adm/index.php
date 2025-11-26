@@ -49,7 +49,6 @@ if (!$auth->acl_get('a_'))
 define('IN_ADMIN', true);
 
 // Some oft used variables
-$safe_mode		= (@ini_get('safe_mode') == '1' || strtolower(@ini_get('safe_mode')) === 'on') ? true : false;
 $file_uploads	= (@ini_get('file_uploads') == '1' || strtolower(@ini_get('file_uploads')) === 'on') ? true : false;
 $module_id		= $request->variable('i', '');
 $mode			= $request->variable('mode', '');
@@ -62,8 +61,8 @@ $template->set_custom_style(array(
 	),
 ), $phpbb_admin_path . 'style');
 
-$template->assign_var('T_ASSETS_PATH', $phpbb_root_path . 'assets');
-$template->assign_var('T_TEMPLATE_PATH', $phpbb_admin_path . 'style');
+$template->assign_var('T_ASSETS_PATH', $phpbb_path_helper->update_web_root_path($phpbb_root_path . 'assets'));
+$template->assign_var('T_TEMPLATE_PATH', $phpbb_path_helper->update_web_root_path($phpbb_root_path . 'style'));
 
 // Instantiate new module
 $module = new p_master();

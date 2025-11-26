@@ -27,6 +27,7 @@ imports:
     - { resource: services_text_formatter.yml }
     - { resource: services_text_reparser.yml }
     - { resource: services_twig.yml }
+    - { resource: services_ucp.yml }
     - { resource: services_user.yml }
 
     - { resource: tables.yml }
@@ -39,6 +40,7 @@ services:
              - '@cache.driver'
              - '@config'
              - '@dbal.conn'
+             - '@dispatcher'
              - '%core.root_path%'
              - '%core.php_ext%'
 
@@ -84,12 +86,22 @@ services:
     controller.helper:
         class: phpbb\controller\helper
         arguments:
-            - '@template'
-            - '@user'
+            - '@auth'
+            - '@cache.driver'
             - '@config'
-            - '@symfony_request'
+            - '@cron.manager'
+            - '@dbal.conn'
+            - '@dispatcher'
+            - '@language'
             - '@request'
             - '@routing.helper'
+            - '@symfony_request'
+            - '@template'
+            - '@user'
+            - '%core.root_path%'
+            - '%core.adm_relative_path%'
+            - '%core.php_ext%'
+            - '%debug.sql_explain%'
 
     controller.resolver:
         class: phpbb\controller\resolver

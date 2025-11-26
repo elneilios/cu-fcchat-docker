@@ -330,17 +330,6 @@ function parseDocument($container) {
 	});
 
 	/**
-	* Adjust HTML code for IE8 and older versions
-	*/
-	// if (oldBrowser) {
-	// 	// Fix .linklist.bulletin lists
-	// 	$container
-	// 		.find('ul.linklist.bulletin > li')
-	// 		.filter(':first-child, .rightside:last-child')
-	// 		.addClass('no-bulletin');
-	// }
-
-	/**
 	* Resize navigation (breadcrumbs) block to keep all links on same line
 	*/
 	$container.find('.navlinks').each(function() {
@@ -459,8 +448,8 @@ function parseDocument($container) {
 			$linksFirst = $linksNotSkip.not(filterLast), // The items that will be hidden first
 			$linksLast = $linksNotSkip.filter(filterLast), // The items that will be hidden last
 			persistent = $this.attr('id') === 'nav-main', // Does this list already have a menu (such as quick-links)?
-			html = '<li class="responsive-menu hidden"><a href="javascript:void(0);" class="js-responsive-menu-link responsive-menu-link"><i class="icon fa-bars fa-fw" aria-hidden="true"></i></a><div class="dropdown"><div class="pointer"><div class="pointer-inner" /></div><ul class="dropdown-contents" /></div></li>',
-			slack = 3; // Vertical slack space (in pixels). Determines how sensitive the script is in determining whether a line-break has occured.
+			html = '<li class="responsive-menu hidden"><a href="javascript:void(0);" class="js-responsive-menu-link responsive-menu-link"><i class="icon fa-bars fa-fw" aria-hidden="true"></i></a><div class="dropdown"><div class="pointer"><div class="pointer-inner"></div></div><ul class="dropdown-contents" /></div></li>',
+			slack = 3; // Vertical slack space (in pixels). Determines how sensitive the script is in determining whether a line-break has occurred.
 
 		// Add a hidden drop-down menu to each links list (except those that already have one)
 		if (!persistent) {
@@ -544,7 +533,7 @@ function parseDocument($container) {
 			}
 			// Copy the list items to the dropdown
 			if (!copied1) {
-				var $clones1 = $linksFirst.clone();
+				var $clones1 = $linksFirst.clone(true);
 				$menuContents.prepend($clones1.addClass('clone clone-first').removeClass('leftside rightside'));
 
 				if ($this.hasClass('post-buttons')) {
@@ -661,7 +650,7 @@ function parseDocument($container) {
 				html = $children.html();
 			}
 
-			$block.append((first ? '' : '<br />') + html);
+			$block.append((first ? '' : '<br>') + html);
 
 			first = false;
 		});
@@ -681,7 +670,7 @@ function parseDocument($container) {
 
 		// Find all headers, get contents
 		$list.prev('.topiclist').find('li.header dd').not('.mark').each(function() {
-			headers.push($(this).text());
+			headers.push($("<div>").text($(this).text()).html());
 			headersLength++;
 		});
 
@@ -718,7 +707,7 @@ function parseDocument($container) {
 					html = headers[i] + ': <strong>' + html + '</strong>';
 				}
 
-				$block.append((first ? '' : '<br />') + html);
+				$block.append((first ? '' : '<br>') + html);
 
 				first = false;
 			});
@@ -784,7 +773,9 @@ function parseDocument($container) {
 				}
 
 				if ((text.length && text !== '-') || cell.children().length) {
-					cell.prepend('<dfn style="display: none;">' + headers[column] + '</dfn>');
+					if (headers[column].length) {
+						cell.prepend($("<dfn>").css('display', 'none').text(headers[column]));
+					}
 				} else {
 					cell.addClass('empty');
 				}
@@ -813,7 +804,7 @@ function parseDocument($container) {
 			$ul = $this.children(),
 			$tabs = $ul.children().not('[data-skip-responsive]'),
 			$links = $tabs.children('a'),
-			$item = $ul.append('<li class="tab responsive-tab" style="display:none;"><a href="javascript:void(0);" class="responsive-tab-link">&nbsp;</a><div class="dropdown tab-dropdown" style="display: none;"><div class="pointer"><div class="pointer-inner" /></div><ul class="dropdown-contents" /></div></li>').find('li.responsive-tab'),
+			$item = $ul.append('<li class="tab responsive-tab" style="display:none;"><a href="javascript:void(0);" class="responsive-tab-link">&nbsp;</a><div class="dropdown tab-dropdown" style="display: none;"><div class="pointer"><div class="pointer-inner"></div></div><ul class="dropdown-contents" /></div></li>').find('li.responsive-tab'),
 			$menu = $item.find('.dropdown-contents'),
 			maxHeight = 0,
 			lastWidth = false,

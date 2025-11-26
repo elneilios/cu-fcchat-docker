@@ -49,7 +49,7 @@ class session
 		// If we are unable to get the script name we use REQUEST_URI as a failover and note it within the page array for easier support...
 		if (!$script_name)
 		{
-			$script_name = htmlspecialchars_decode($request->server('REQUEST_URI'));
+			$script_name = html_entity_decode($request->server('REQUEST_URI'), ENT_COMPAT);
 			$script_name = (($pos = strpos($script_name, '?')) !== false) ? substr($script_name, 0, $pos) : $script_name;
 			$page_array['failover'] = 1;
 		}
@@ -83,7 +83,7 @@ class session
 
 		// basenamed page name (for example: index.php)
 		$page_name = (substr($script_name, -1, 1) == '/') ? '' : basename($script_name);
-		$page_name = urlencode(htmlspecialchars($page_name));
+		$page_name = urlencode(htmlspecialchars($page_name, ENT_COMPAT));
 
 		$symfony_request_path = $phpbb_filesystem->clean_path($symfony_request->getPathInfo());
 		if ($symfony_request_path !== '/')
@@ -148,8 +148,8 @@ class session
 			'page_dir'			=> $page_dir,
 
 			'query_string'		=> $query_string,
-			'script_path'		=> str_replace(' ', '%20', htmlspecialchars($script_path)),
-			'root_script_path'	=> str_replace(' ', '%20', htmlspecialchars($root_script_path)),
+			'script_path'		=> str_replace(' ', '%20', htmlspecialchars($script_path, ENT_COMPAT)),
+			'root_script_path'	=> str_replace(' ', '%20', htmlspecialchars($root_script_path, ENT_COMPAT)),
 
 			'page'				=> $page,
 			'forum'				=> $forum_id,
@@ -166,7 +166,7 @@ class session
 		global $config, $request;
 
 		// Get hostname
-		$host = htmlspecialchars_decode($request->header('Host', $request->server('SERVER_NAME')));
+		$host = html_entity_decode($request->header('Host', $request->server('SERVER_NAME')), ENT_COMPAT);
 
 		// Should be a string and lowered
 		$host = (string) strtolower($host);
@@ -250,8 +250,7 @@ class session
 			$ips = explode(' ', $this->forwarded_for);
 			foreach ($ips as $ip)
 			{
-				// check IPv4 first, the IPv6 is hopefully only going to be used very seldomly
-				if (!empty($ip) && !preg_match(get_preg_expression('ipv4'), $ip) && !preg_match(get_preg_expression('ipv6'), $ip))
+				if (!filter_var($ip, FILTER_VALIDATE_IP))
 				{
 					// contains invalid data, don't use the forwarded for header
 					$this->forwarded_for = '';
@@ -290,7 +289,7 @@ class session
 
 		// Why no forwarded_for et al? Well, too easily spoofed. With the results of my recent requests
 		// it's pretty clear that in the majority of cases you'll at least be left with a proxy/cache ip.
-		$ip = htmlspecialchars_decode($request->server('REMOTE_ADDR'));
+		$ip = html_entity_decode($request->server('REMOTE_ADDR'), ENT_COMPAT);
 		$ip = preg_replace('# {2,}#', ' ', str_replace(',', ' ', $ip));
 
 		/**
@@ -311,49 +310,17 @@ class session
 
 		foreach ($ips as $ip)
 		{
-			if (function_exists('phpbb_ip_normalise'))
+			// Normalise IP address
+			$ip = phpbb_ip_normalise($ip);
+
+			if ($ip === false)
 			{
-				// Normalise IP address
-				$ip = phpbb_ip_normalise($ip);
-
-				if (empty($ip))
-				{
-					// IP address is invalid.
-					break;
-				}
-
-				// IP address is valid.
-				$this->ip = $ip;
-
-				// Skip legacy code.
-				continue;
-			}
-
-			if (preg_match(get_preg_expression('ipv4'), $ip))
-			{
-				$this->ip = $ip;
-			}
-			else if (preg_match(get_preg_expression('ipv6'), $ip))
-			{
-				// Quick check for IPv4-mapped address in IPv6
-				if (stripos($ip, '::ffff:') === 0)
-				{
-					$ipv4 = substr($ip, 7);
-
-					if (preg_match(get_preg_expression('ipv4'), $ipv4))
-					{
-						$ip = $ipv4;
-					}
-				}
-
-				$this->ip = $ip;
-			}
-			else
-			{
-				// We want to use the last valid address in the chain
-				// Leave foreach loop when address is invalid
+				// IP address is invalid.
 				break;
 			}
+
+			// IP address is valid.
+			$this->ip = $ip;
 		}
 
 		$this->load = false;
@@ -453,7 +420,7 @@ class session
 						// Else check the autologin length... and also removing those having autologin enabled but no longer allowed board-wide.
 						if (!$this->data['session_autologin'])
 						{
-							if ($this->data['session_time'] < $this->time_now - ($config['session_length'] + 60))
+							if ($this->data['session_time'] < $this->time_now - ((int) $config['session_length'] + 60))
 							{
 								$session_expired = true;
 							}
@@ -473,13 +440,19 @@ class session
 						// Is user banned? Are they excluded? Won't return on ban, exists within method
 						$this->check_ban_for_current_session($config);
 
+						// Update user last active time accordingly, but in a minute or so
+						if ($this->time_now - (int) $this->data['user_last_active'] > 60)
+						{
+							$this->update_last_active_time();
+						}
+
 						return true;
 					}
 				}
 				else
 				{
-					// Added logging temporarly to help debug bugs...
-					if (defined('DEBUG') && $this->data['user_id'] != ANONYMOUS)
+					// Added logging temporarily to help debug bugs...
+					if ($phpbb_container->getParameter('session.log_errors') && $this->data['user_id'] != ANONYMOUS)
 					{
 						if ($referer_valid)
 						{
@@ -488,8 +461,8 @@ class session
 								$s_ip,
 								$u_browser,
 								$s_browser,
-								htmlspecialchars($u_forwarded_for),
-								htmlspecialchars($s_forwarded_for)
+								htmlspecialchars($u_forwarded_for, ENT_COMPAT),
+								htmlspecialchars($s_forwarded_for, ENT_COMPAT)
 							));
 						}
 						else
@@ -721,10 +694,7 @@ class session
 				if ($this->time_now - $this->data['session_time'] > 60 || ($this->update_session_page && $this->data['session_page'] != $this->page['page']))
 				{
 					// Update the last visit time
-					$sql = 'UPDATE ' . USERS_TABLE . '
-						SET user_lastvisit = ' . (int) $this->data['session_time'] . '
-						WHERE user_id = ' . (int) $this->data['user_id'];
-					$db->sql_query($sql);
+					$this->update_user_lastvisit();
 				}
 
 				$SID = '?sid=';
@@ -848,20 +818,21 @@ class session
 				$this->data['user_form_salt'] = unique_id();
 				// Update the form key
 				$sql = 'UPDATE ' . USERS_TABLE . '
-					SET user_form_salt = \'' . $db->sql_escape($this->data['user_form_salt']) . '\'
+					SET user_form_salt = \'' . $db->sql_escape($this->data['user_form_salt']) . '\',
+						user_last_active = ' . (int) $this->time_now . '
 					WHERE user_id = ' . (int) $this->data['user_id'];
 				$db->sql_query($sql);
+			}
+			else
+			{
+				$this->update_last_active_time();
 			}
 		}
 		else
 		{
 			$this->data['session_time'] = $this->data['session_last_visit'] = $this->time_now;
 
-			// Update the last visit time
-			$sql = 'UPDATE ' . USERS_TABLE . '
-				SET user_lastvisit = ' . (int) $this->data['session_time'] . '
-				WHERE user_id = ' . (int) $this->data['user_id'];
-			$db->sql_query($sql);
+			$this->update_user_lastvisit();
 
 			$SID = '?sid=';
 			$_SID = '';
@@ -987,72 +958,96 @@ class session
 	{
 		global $db, $config, $phpbb_container, $phpbb_dispatcher;
 
-		$batch_size = 10;
-
 		if (!$this->time_now)
 		{
 			$this->time_now = time();
 		}
 
-		// Firstly, delete guest sessions
+		/**
+		 * Get expired sessions for registered users, only most recent for each user
+		 * Inner SELECT gets most recent expired sessions for unique session_user_id
+		 * Outer SELECT gets data for them
+		 */
+		$sql_select = 'SELECT s1.session_page, s1.session_user_id, s1.session_time AS recent_time
+			FROM ' . SESSIONS_TABLE . ' AS s1
+			INNER JOIN (
+				SELECT session_user_id, MAX(session_time) AS recent_time
+				FROM ' . SESSIONS_TABLE . '
+				WHERE session_time < ' . ($this->time_now - (int) $config['session_length']) . '
+					AND session_user_id <> ' . ANONYMOUS . '
+				GROUP BY session_user_id
+			) AS s2
+			ON s1.session_user_id = s2.session_user_id
+				AND s1.session_time = s2.recent_time';
+
+		switch ($db->get_sql_layer())
+		{
+			case 'sqlite3':
+				if (phpbb_version_compare($db->sql_server_info(true), '3.8.3', '>='))
+				{
+					// For SQLite versions 3.8.3+ which support Common Table Expressions (CTE)
+					$sql = "WITH s3 (session_page, session_user_id, session_time) AS ($sql_select)
+						UPDATE " . USERS_TABLE . '
+						SET (user_lastpage, user_lastvisit) = (SELECT session_page, session_time FROM s3 WHERE session_user_id = user_id)
+						WHERE EXISTS (SELECT session_user_id FROM s3 WHERE session_user_id = user_id)';
+					$db->sql_query($sql);
+
+					break;
+				}
+
+			// No break, for SQLite versions prior to 3.8.3 and Oracle
+			case 'oracle':
+				$result = $db->sql_query($sql_select);
+				while ($row = $db->sql_fetchrow($result))
+				{
+					$sql = 'UPDATE ' . USERS_TABLE . '
+						SET user_lastvisit = ' . (int) $row['recent_time'] . ", user_lastpage = '" . $db->sql_escape($row['session_page']) . "'
+						WHERE user_id = " . (int) $row['session_user_id'];
+					$db->sql_query($sql);
+				}
+				$db->sql_freeresult($result);
+			break;
+
+			case 'mysqli':
+				$sql = 'UPDATE ' . USERS_TABLE . " u,
+					($sql_select) s3
+					SET u.user_lastvisit = s3.recent_time, u.user_lastpage = s3.session_page
+					WHERE u.user_id = s3.session_user_id";
+				$db->sql_query($sql);
+			break;
+
+			default:
+				$sql = 'UPDATE ' . USERS_TABLE . "
+					SET user_lastvisit = s3.recent_time, user_lastpage = s3.session_page
+					FROM ($sql_select) s3
+					WHERE user_id = s3.session_user_id";
+				$db->sql_query($sql);
+			break;
+		}
+
+		// Delete all expired sessions
 		$sql = 'DELETE FROM ' . SESSIONS_TABLE . '
-			WHERE session_user_id = ' . ANONYMOUS . '
-				AND session_time < ' . (int) ($this->time_now - $config['session_length']);
+			WHERE session_time < ' . ($this->time_now - (int) $config['session_length']);
 		$db->sql_query($sql);
 
-		// Get expired sessions, only most recent for each user
-		$sql = 'SELECT session_user_id, session_page, MAX(session_time) AS recent_time
-			FROM ' . SESSIONS_TABLE . '
-			WHERE session_time < ' . ($this->time_now - $config['session_length']) . '
-			GROUP BY session_user_id, session_page';
-		$result = $db->sql_query_limit($sql, $batch_size);
+		// Update gc timer
+		$config->set('session_last_gc', $this->time_now, false);
 
-		$del_user_id = array();
-		$del_sessions = 0;
-
-		while ($row = $db->sql_fetchrow($result))
+		if ($config['max_autologin_time'])
 		{
-			$sql = 'UPDATE ' . USERS_TABLE . '
-				SET user_lastvisit = ' . (int) $row['recent_time'] . ", user_lastpage = '" . $db->sql_escape($row['session_page']) . "'
-				WHERE user_id = " . (int) $row['session_user_id'];
-			$db->sql_query($sql);
-
-			$del_user_id[] = (int) $row['session_user_id'];
-			$del_sessions++;
-		}
-		$db->sql_freeresult($result);
-
-		if (count($del_user_id))
-		{
-			// Delete expired sessions
-			$sql = 'DELETE FROM ' . SESSIONS_TABLE . '
-				WHERE ' . $db->sql_in_set('session_user_id', $del_user_id) . '
-					AND session_time < ' . ($this->time_now - $config['session_length']);
+			$sql = 'DELETE FROM ' . SESSIONS_KEYS_TABLE . '
+				WHERE last_login < ' . (time() - (86400 * (int) $config['max_autologin_time']));
 			$db->sql_query($sql);
 		}
 
-		if ($del_sessions < $batch_size)
-		{
-			// Less than 10 users, update gc timer ... else we want gc
-			// called again to delete other sessions
-			$config->set('session_last_gc', $this->time_now, false);
+		// only called from CRON; should be a safe workaround until the infrastructure gets going
+		/* @var \phpbb\captcha\factory $captcha_factory */
+		$captcha_factory = $phpbb_container->get('captcha.factory');
+		$captcha_factory->garbage_collect($config['captcha_plugin']);
 
-			if ($config['max_autologin_time'])
-			{
-				$sql = 'DELETE FROM ' . SESSIONS_KEYS_TABLE . '
-					WHERE last_login < ' . (time() - (86400 * (int) $config['max_autologin_time']));
-				$db->sql_query($sql);
-			}
-
-			// only called from CRON; should be a safe workaround until the infrastructure gets going
-			/* @var $captcha_factory \phpbb\captcha\factory */
-			$captcha_factory = $phpbb_container->get('captcha.factory');
-			$captcha_factory->garbage_collect($config['captcha_plugin']);
-
-			$sql = 'DELETE FROM ' . LOGIN_ATTEMPT_TABLE . '
-				WHERE attempt_time < ' . (time() - (int) $config['ip_login_limit_time']);
-			$db->sql_query($sql);
-		}
+		$sql = 'DELETE FROM ' . LOGIN_ATTEMPT_TABLE . '
+			WHERE attempt_time < ' . (time() - (int) $config['ip_login_limit_time']);
+		$db->sql_query($sql);
 
 		/**
 		* Event to trigger extension on session_gc
@@ -1356,13 +1351,116 @@ class session
 	}
 
 	/**
+	* Check if ip is blacklisted by Spamhaus SBL
+	*
+	* Disables DNSBL setting if errors are returned by Spamhaus due to a policy violation.
+	* https://www.spamhaus.com/product/help-for-spamhaus-public-mirror-users/
+	*
+	* @param string 		$dnsbl	the blacklist to check against
+	* @param string|false	$ip		the IPv4 address to check
+	*
+	* @return bool true if listed in spamhaus database, false if not
+	*/
+	function check_dnsbl_spamhaus($dnsbl, $ip = false)
+	{
+		global $config, $phpbb_log;
+
+		if ($ip === false)
+		{
+			$ip = $this->ip;
+		}
+
+		// Spamhaus does not support IPv6 addresses.
+		if (strpos($ip, ':') !== false)
+		{
+			return false;
+		}
+
+		if ($ip)
+		{
+			$quads = explode('.', $ip);
+			$reverse_ip = $quads[3] . '.' . $quads[2] . '.' . $quads[1] . '.' . $quads[0];
+
+			$records = dns_get_record($reverse_ip . '.' . $dnsbl . '.', DNS_A);
+			if (empty($records))
+			{
+				return false;
+			}
+			else
+			{
+				$error = false;
+				foreach ($records as $record)
+				{
+					if ($record['ip'] == '127.255.255.254')
+					{
+						$error = 'LOG_SPAMHAUS_OPEN_RESOLVER';
+						break;
+					}
+					else if ($record['ip'] == '127.255.255.255')
+					{
+						$error = 'LOG_SPAMHAUS_VOLUME_LIMIT';
+						break;
+					}
+				}
+
+				if ($error !== false)
+				{
+					$config->set('check_dnsbl', 0);
+					$phpbb_log->add('critical', $this->data['user_id'], $ip, $error);
+				}
+				else
+				{
+					// The existence of a non-error A record means it's a hit
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	* Checks if an IPv4 address is in a specified DNS blacklist
+	*
+	* Only checks if a record is returned or not.
+	*
+	* @param string 		$dnsbl	the blacklist to check against
+	* @param string|false	$ip		the IPv4 address to check
+	*
+	* @return bool true if record is returned, false if not
+	*/
+	function check_dnsbl_ipv4_generic($dnsbl, $ip = false)
+	{
+		if ($ip === false)
+		{
+			$ip = $this->ip;
+		}
+
+		// This function does not support IPv6 addresses.
+		if (strpos($ip, ':') !== false)
+		{
+			return false;
+		}
+
+		$quads = explode('.', $ip);
+		$reverse_ip = $quads[3] . '.' . $quads[2] . '.' . $quads[1] . '.' . $quads[0];
+
+		if (checkdnsrr($reverse_ip . '.' . $dnsbl . '.', 'A') === true)
+		{
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
 	* Check if ip is blacklisted
 	* This should be called only where absolutely necessary
 	*
 	* Only IPv4 (rbldns does not support AAAA records/IPv6 lookups)
 	*
 	* @author satmd (from the php manual)
-	* @param string 		$mode	register/post - spamcop for example is ommitted for posting
+	* @param string 		$mode	register/post - spamcop for example is omitted for posting
 	* @param string|false	$ip		the IPv4 address to check
 	*
 	* @return false if ip is not blacklisted, else an array([checked server], [lookup])
@@ -1381,28 +1479,25 @@ class session
 		}
 
 		$dnsbl_check = array(
-			'sbl.spamhaus.org'	=> 'http://www.spamhaus.org/query/bl?ip=',
+			'sbl.spamhaus.org'	=> ['https://check.spamhaus.org/listed/?searchterm=', 'check_dnsbl_spamhaus'],
 		);
 
 		if ($mode == 'register')
 		{
-			$dnsbl_check['bl.spamcop.net'] = 'http://spamcop.net/bl.shtml?';
+			$dnsbl_check['bl.spamcop.net'] = ['https://www.spamcop.net/bl.shtml?', 'check_dnsbl_ipv4_generic'];
 		}
 
 		if ($ip)
 		{
-			$quads = explode('.', $ip);
-			$reverse_ip = $quads[3] . '.' . $quads[2] . '.' . $quads[1] . '.' . $quads[0];
-
 			// Need to be listed on all servers...
 			$listed = true;
 			$info = array();
 
 			foreach ($dnsbl_check as $dnsbl => $lookup)
 			{
-				if (phpbb_checkdnsrr($reverse_ip . '.' . $dnsbl . '.', 'A') === true)
+				if (call_user_func(array($this, $lookup[1]), $dnsbl, $ip) === true)
 				{
-					$info = array($dnsbl, $lookup . $ip);
+					$info = array($dnsbl, $lookup[0] . $ip);
 				}
 				else
 				{
@@ -1421,7 +1516,7 @@ class session
 
 	/**
 	* Check if URI is blacklisted
-	* This should be called only where absolutly necessary, for example on the submitted website field
+	* This should be called only where absolutely necessary, for example on the submitted website field
 	* This function is not in use at the moment and is only included for testing purposes, it may not work at all!
 	* This means it is untested at the moment and therefore commented out
 	*
@@ -1444,7 +1539,7 @@ class session
 		{
 			// One problem here... the return parameter for the "windows" method is different from what
 			// we expect... this may render this check useless...
-			if (phpbb_checkdnsrr($uri . '.multi.uribl.com.', 'A') === true)
+			if (checkdnsrr($uri . '.multi.uribl.com.', 'A') === true)
 			{
 				return true;
 			}
@@ -1466,7 +1561,7 @@ class session
 	*/
 	function set_login_key($user_id = false, $key = false, $user_ip = false)
 	{
-		global $db;
+		global $db, $phpbb_dispatcher;
 
 		$user_id = ($user_id === false) ? $this->data['user_id'] : $user_id;
 		$user_ip = ($user_ip === false) ? $this->ip : $user_ip;
@@ -1498,6 +1593,29 @@ class session
 		{
 			$sql = 'INSERT INTO ' . SESSIONS_KEYS_TABLE . ' ' . $db->sql_build_array('INSERT', $sql_ary);
 		}
+
+		/**
+		 * Event to adjust autologin keys process
+		 *
+		 * @event core.set_login_key
+		 * @var	string|false	key			Current autologin key if exists, false otherwise
+		 * @var	string			key_id		New autologin key
+		 * @var	string			sql			SQL query to update/insert autologin key
+		 * @var	array			sql_ary		Aray with autologin key data
+		 * @var	int				user_id		Current user's ID
+		 * @var	string			user_ip		Current user's IP address
+		 * @since 3.3.2-RC1
+		 */
+		$vars = [
+			'key',
+			'key_id',
+			'sql',
+			'sql_ary',
+			'user_id',
+			'user_ip',
+		];
+		extract($phpbb_dispatcher->trigger_event('core.set_login_key', compact($vars)));
+
 		$db->sql_query($sql);
 
 		$this->cookie_data['k'] = $key_id;
@@ -1570,7 +1688,7 @@ class session
 			return true;
 		}
 
-		$host = htmlspecialchars($this->host);
+		$host = htmlspecialchars($this->host, ENT_COMPAT);
 		$ref = substr($this->referer, strpos($this->referer, '://') + 3);
 
 		if (!(stripos($ref, $host) === 0) && (!$config['force_server_vars'] || !(stripos($ref, $config['server_name']) === 0)))
@@ -1646,7 +1764,7 @@ class session
 		}
 
 		// Do not update the session page for ajax requests, so the view online still works as intended
-		$page_changed = $this->update_session_page && $this->data['session_page'] != $this->page['page'] && !$request->is_ajax();
+		$page_changed = $this->update_session_page && (!isset($this->data['session_page']) || $this->data['session_page'] != $this->page['page'] || $this->data['session_forum_id'] != $this->page['forum']) && !$request->is_ajax();
 
 		// Only update session DB a minute or so after last update or if page changes
 		if ($this->time_now - (isset($this->data['session_time']) ? $this->data['session_time'] : 0) > 60 || $page_changed)
@@ -1671,6 +1789,51 @@ class session
 			{
 				$this->leave_newly_registered();
 			}
+		}
+	}
+
+	/**
+	 * Get user ID
+	 *
+	 * @return int User ID
+	 */
+	public function id() : int
+	{
+		return isset($this->data['user_id']) ? (int) $this->data['user_id'] : ANONYMOUS;
+	}
+
+	/**
+	 * Update user last visit time
+	 */
+	public function update_user_lastvisit()
+	{
+		global $db;
+
+		if (isset($this->data['session_time'], $this->data['user_id']))
+		{
+			$sql = 'UPDATE ' . USERS_TABLE . '
+				SET user_lastvisit = ' . (int) $this->data['session_time'] . ',
+					user_last_active = ' . $this->time_now . '
+				WHERE user_id = ' . (int) $this->data['user_id'];
+			$db->sql_query($sql);
+		}
+	}
+
+	/**
+	 * Update user's last active time
+	 *
+	 * @return void
+	 */
+	public function update_last_active_time()
+	{
+		global $db;
+
+		if (isset($this->time_now, $this->data['user_id']))
+		{
+			$sql = 'UPDATE ' . USERS_TABLE . '
+				SET user_last_active = ' . $this->time_now . '
+				WHERE user_id = ' . (int) $this->data['user_id'];
+			$db->sql_query($sql);
 		}
 	}
 }

@@ -133,7 +133,7 @@ class version_helper
 	/**
 	 * Over-ride the stability to force check to include unstable versions
 	 *
-	 * @param null|string Null to not force stability, 'unstable' or 'stable' to
+	 * @param null|string $stability Null to not force stability, 'unstable' or 'stable' to
 	 * 						force the corresponding stability
 	 * @return version_helper
 	 */
@@ -381,7 +381,7 @@ class version_helper
 		}
 		else if ($info === false || $force_update)
 		{
-			$info = $this->file_downloader->get($this->host, $this->path, $this->file, $this->use_ssl ? 443 : 80);
+			$info = $this->file_downloader->get($this->host, $this->path, $this->file, $this->use_ssl ? 443 : 80, 30);
 			$error_string = $this->file_downloader->get_error_string();
 
 			if (!empty($error_string))

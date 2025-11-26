@@ -123,7 +123,7 @@ class p_master
 
 		// We "could" build a true tree with this function - maybe mod authors want to use this...
 		// Functions for traversing and manipulating the tree are not available though
-		// We might re-structure the module system to use true trees in 3.2.x...
+		// We might re-structure the module system to use true trees in 4.0
 		// $tree = $this->build_tree($this->module_cache['modules'], $this->module_cache['parents']);
 
 		// Clean up module cache array to only let survive modules the user can access
@@ -445,7 +445,7 @@ class p_master
 				break;
 
 				default:
-					if (!preg_match('#(?:' . implode(array_keys($valid_tokens), ')|(?:') . ')#', $token))
+					if (!preg_match('#(?:' . implode(')|(?:', array_keys($valid_tokens)) . ')#', $token))
 					{
 						$token = '';
 					}
@@ -480,7 +480,7 @@ class p_master
 	*/
 	function set_active($id = false, $mode = false)
 	{
-		global $request;
+		global $auth, $request, $user;
 
 		$icat = false;
 		$this->active_module = false;
@@ -500,6 +500,14 @@ class p_master
 		if ($id && !is_numeric($id) && !$this->is_full_class($id))
 		{
 			$id = $this->p_class . '_' . $id;
+		}
+
+		// Fallback to acp main page for special test permission mode
+		if ($this->p_class === 'acp' && $user->data['user_perm_from'] && $auth->acl_get('a_switchperm'))
+		{
+			$id = '';
+			$mode = '';
+			$icat = false;
 		}
 
 		$category = false;
@@ -662,7 +670,7 @@ class p_master
 		// Add url_extra parameter to u_action url
 		if (!empty($this->module_ary) && $this->active_module !== false && $this->module_ary[$this->active_module_row_id]['url_extra'])
 		{
-			$this->module->u_action .= $this->module_ary[$this->active_module_row_id]['url_extra'];
+			$this->module->u_action .= '&amp;' . $this->module_ary[$this->active_module_row_id]['url_extra'];
 		}
 
 		// Assign the module path for re-usage
@@ -920,7 +928,7 @@ class p_master
 			}
 
 			// Was not allowed in categories before - /*!$item_ary['cat'] && */
-			$u_title .= (isset($item_ary['url_extra'])) ? $item_ary['url_extra'] : '';
+			$u_title .= (isset($item_ary['url_extra']) && $item_ary['url_extra']) ? '&amp;' . $item_ary['url_extra'] : '';
 
 			// Only output a categories items if it's currently selected
 			if (!$depth || ($depth && (in_array($item_ary['parent'], array_values($this->module_cache['parents'])) || $item_ary['parent'] == $this->p_parent)))
@@ -932,6 +940,14 @@ class p_master
 					'S_SELECTED'	=> (isset($this->module_cache['parents'][$item_ary['id']]) || $item_ary['id'] == $this->p_id) ? true : false,
 					'U_TITLE'		=> $u_title
 				);
+
+				if (isset($this->module_cache['parents'][$item_ary['id']]) || $item_ary['id'] == $this->p_id)
+				{
+					$template->assign_block_vars('navlinks', array(
+						'BREADCRUMB_NAME'	=> $item_ary['lang'],
+						'U_BREADCRUMB'		=> $u_title,
+					));
+				}
 
 				$template->assign_block_vars($use_tabular_offset, array_merge($tpl_ary, array_change_key_case($item_ary, CASE_UPPER)));
 			}

@@ -22,11 +22,9 @@ if (!defined('IN_PHPBB'))
 setlocale(LC_CTYPE, 'C');
 
 /**
-* Setup the UTF-8 portability layer
-*/
-Patchwork\Utf8\Bootup::initUtf8Encode();
-Patchwork\Utf8\Bootup::initMbstring();
-Patchwork\Utf8\Bootup::initIntl();
+ * UTF-8 portability layer is provided by
+ * symfony/polyfill-mbstring, symfony/polyfill-intl-normalizer, symfony/polyfill-php72
+ */
 
 /**
 * UTF-8 tools
@@ -71,6 +69,22 @@ function utf8_strpos($str, $needle, $offset = null)
 	else
 	{
 		return mb_strpos($str, $needle, $offset);
+	}
+}
+
+/**
+* UTF-8 aware alternative to stripos
+* @ignore
+*/
+function utf8_stripos($str, $needle, $offset = null)
+{
+	if (is_null($offset))
+	{
+		return mb_stripos($str, $needle);
+	}
+	else
+	{
+		return mb_stripos($str, $needle, $offset);
 	}
 }
 
@@ -171,7 +185,7 @@ function utf8_strspn($str, $mask, $start = null, $length = null)
 * Make a string's first character uppercase
 *
 * @author Harry Fuecks
-* @param string
+* @param string $str
 * @return string with first character as upper case (if applicable)
 */
 function utf8_ucfirst($str)

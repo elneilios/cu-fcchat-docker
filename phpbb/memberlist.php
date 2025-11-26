@@ -364,6 +364,11 @@ switch ($mode)
 			}
 		}
 
+		$template->assign_block_vars('navlinks', array(
+			'BREADCRUMB_NAME'	=> $page_title,
+			'U_BREADCRUMB'		=> append_sid("{$phpbb_root_path}memberlist.$phpEx", "mode=team"),
+		));
+
 		$template->assign_vars(array(
 			'PM_IMG'		=> $user->img('icon_contact_pm', $user->lang['SEND_PRIVATE_MESSAGE']))
 		);
@@ -437,16 +442,16 @@ switch ($mode)
 						$messenger = new messenger(false);
 
 						$messenger->template('profile_send_im', $row['user_lang']);
-						$messenger->subject(htmlspecialchars_decode($subject));
+						$messenger->subject(html_entity_decode($subject, ENT_COMPAT));
 
 						$messenger->replyto($user->data['user_email']);
 						$messenger->set_addresses($row);
 
 						$messenger->assign_vars(array(
 							'BOARD_CONTACT'	=> phpbb_get_board_contact($config, $phpEx),
-							'FROM_USERNAME'	=> htmlspecialchars_decode($user->data['username']),
-							'TO_USERNAME'	=> htmlspecialchars_decode($row['username']),
-							'MESSAGE'		=> htmlspecialchars_decode($message))
+							'FROM_USERNAME'	=> html_entity_decode($user->data['username'], ENT_COMPAT),
+							'TO_USERNAME'	=> html_entity_decode($row['username'], ENT_COMPAT),
+							'MESSAGE'		=> html_entity_decode($message, ENT_COMPAT))
 						);
 
 						$messenger->send(NOTIFY_IM);
@@ -460,6 +465,11 @@ switch ($mode)
 				}
 			break;
 		}
+
+		$template->assign_block_vars('navlinks', array(
+			'BREADCRUMB_NAME'	=> $page_title,
+			'U_BREADCRUMB'		=> append_sid("{$phpbb_root_path}memberlist.$phpEx", "mode=contact&amp;action=$action&amp;u=$user_id"),
+		));
 
 		// Send vars to the template
 		$template->assign_vars(array(
@@ -643,11 +653,12 @@ switch ($mode)
 			FROM ' . ZEBRA_TABLE . "
 			WHERE zebra_id = $user_id
 				AND user_id = {$user->data['user_id']}";
-
 		$result = $db->sql_query($sql);
 		$row = $db->sql_fetchrow($result);
-		$foe = ($row['foe']) ? true : false;
-		$friend = ($row['friend']) ? true : false;
+
+		$foe = $row ? (bool) $row['foe'] : false;
+		$friend = $row ? (bool) $row['friend'] : false;
+
 		$db->sql_freeresult($result);
 
 		if ($config['load_onlinetrack'])
@@ -660,7 +671,7 @@ switch ($mode)
 			$db->sql_freeresult($result);
 
 			$member['session_time'] = (isset($row['session_time'])) ? $row['session_time'] : 0;
-			$member['session_viewonline'] = (isset($row['session_viewonline'])) ? $row['session_viewonline'] :	0;
+			$member['session_viewonline'] = (isset($row['session_viewonline'])) ? $row['session_viewonline'] : 0;
 			unset($row);
 		}
 
@@ -793,8 +804,8 @@ switch ($mode)
 			'S_USER_NOTES'				=> ($user_notes_enabled) ? true : false,
 			'S_WARN_USER'				=> ($warn_user_enabled) ? true : false,
 			'S_ZEBRA'					=> ($user->data['user_id'] != $user_id && $user->data['is_registered'] && $zebra_enabled) ? true : false,
-			'U_ADD_FRIEND'				=> (!$friend && !$foe && $friends_enabled) ? append_sid("{$phpbb_root_path}ucp.$phpEx", 'i=zebra&amp;add=' . urlencode(htmlspecialchars_decode($member['username']))) : '',
-			'U_ADD_FOE'					=> (!$friend && !$foe && $foes_enabled) ? append_sid("{$phpbb_root_path}ucp.$phpEx", 'i=zebra&amp;mode=foes&amp;add=' . urlencode(htmlspecialchars_decode($member['username']))) : '',
+			'U_ADD_FRIEND'				=> (!$friend && !$foe && $friends_enabled) ? append_sid("{$phpbb_root_path}ucp.$phpEx", 'i=zebra&amp;add=' . urlencode(html_entity_decode($member['username'], ENT_COMPAT))) : '',
+			'U_ADD_FOE'					=> (!$friend && !$foe && $foes_enabled) ? append_sid("{$phpbb_root_path}ucp.$phpEx", 'i=zebra&amp;mode=foes&amp;add=' . urlencode(html_entity_decode($member['username'], ENT_COMPAT))) : '',
 			'U_REMOVE_FRIEND'			=> ($friend && $friends_enabled) ? append_sid("{$phpbb_root_path}ucp.$phpEx", 'i=zebra&amp;remove=1&amp;usernames[]=' . $user_id) : '',
 			'U_REMOVE_FOE'				=> ($foe && $foes_enabled) ? append_sid("{$phpbb_root_path}ucp.$phpEx", 'i=zebra&amp;remove=1&amp;mode=foes&amp;usernames[]=' . $user_id) : '',
 
@@ -805,11 +816,26 @@ switch ($mode)
 		* Modify user's template vars before we display the profile
 		*
 		* @event core.memberlist_modify_view_profile_template_vars
-		* @var	array	template_ary	Array with user's template vars
+		* @var	array	template_ary			Array with user's template vars
+		* @var	int		user_id					The user ID
+		* @var	bool	user_notes_enabled		Is the mcp user notes module enabled?
+		* @var	bool	warn_user_enabled		Is the mcp warnings module enabled?
+		* @var	bool	friends_enabled			Is the ucp friends module enabled?
+		* @var	bool	foes_enabled			Is the ucp foes module enabled?
+		* @var	bool    friend					Is the user friend?
+		* @var	bool	foe						Is the user foe?
 		* @since 3.2.6-RC1
+		* @changed 3.3.15-RC1 Added vars user_id, user_notes_enabled, warn_user_enabled, friend, friends_enabled, foe, foes_enabled
 		*/
 		$vars = array(
 			'template_ary',
+			'user_id',
+			'user_notes_enabled',
+			'warn_user_enabled',
+			'friend',
+			'friends_enabled',
+			'foe',
+			'foes_enabled',
 		);
 		extract($phpbb_dispatcher->trigger_event('core.memberlist_modify_view_profile_template_vars', compact($vars)));
 
@@ -865,6 +891,15 @@ switch ($mode)
 		$page_title = sprintf($user->lang['VIEWING_PROFILE'], $member['username']);
 		$template_html = 'memberlist_view.html';
 
+		$template->assign_block_vars('navlinks', array(
+			'BREADCRUMB_NAME'	=> $user->lang('MEMBERLIST'),
+			'U_BREADCRUMB'		=> append_sid("{$phpbb_root_path}memberlist.$phpEx"),
+		));
+		$template->assign_block_vars('navlinks', array(
+			'BREADCRUMB_NAME'	=> $member['username'],
+			'U_BREADCRUMB'		=> append_sid("{$phpbb_root_path}memberlist.$phpEx", "mode=viewprofile&u=$user_id"),
+		));
+
 	break;
 
 	case 'contactadmin':
@@ -914,6 +949,50 @@ switch ($mode)
 		$template_html = $form->get_template_file();
 		$form->render($template);
 
+		if ($user_id)
+		{
+			$navlink_name = $user->lang('SEND_EMAIL');
+			$navlink_url = append_sid("{$phpbb_root_path}memberlist.$phpEx", "mode=email&u=$user_id");
+		}
+		else if ($topic_id)
+		{
+			// Generate the navlinks based on the selected topic
+			$navlinks_sql_array = [
+				'SELECT'    => 'f.parent_id, f.forum_parents, f.left_id, f.right_id, f.forum_type, f.forum_name, 
+					f.forum_id, f.forum_desc, f.forum_desc_uid, f.forum_desc_bitfield, f.forum_desc_options, 
+					f.forum_options, t.topic_title',
+				'FROM'      => [
+					FORUMS_TABLE  => 'f',
+					TOPICS_TABLE  => 't',
+				],
+				'WHERE'     => 't.forum_id = f.forum_id AND t.topic_id = ' . (int) $topic_id,
+			];
+
+			$sql = $db->sql_build_query('SELECT', $navlinks_sql_array);
+			$result = $db->sql_query($sql);
+			$topic_data = $db->sql_fetchrow($result);
+			$db->sql_freeresult($result);
+
+			generate_forum_nav($topic_data);
+			$template->assign_block_vars('navlinks', array(
+				'BREADCRUMB_NAME'	=> $topic_data['topic_title'],
+				'U_BREADCRUMB'		=> append_sid("{$phpbb_root_path}viewtopic.$phpEx", "t=$topic_id"),
+			));
+
+			$navlink_name = $user->lang('EMAIL_TOPIC');
+			$navlink_url = append_sid("{$phpbb_root_path}memberlist.$phpEx", "mode=email&t=$topic_id");
+		}
+		else if ($mode === 'contactadmin')
+		{
+			$navlink_name = $user->lang('CONTACT_ADMIN');
+			$navlink_url = append_sid("{$phpbb_root_path}memberlist.$phpEx", "mode=contactadmin");
+		}
+
+		$template->assign_block_vars('navlinks', array(
+			'BREADCRUMB_NAME'	=> $navlink_name,
+			'U_BREADCRUMB'		=> $navlink_url,
+		));
+
 	break;
 
 	case 'livesearch':
@@ -925,23 +1004,26 @@ switch ($mode)
 			WHERE ' . $db->sql_in_set('user_type', $user_types) . '
 				AND username_clean ' . $db->sql_like_expression(utf8_clean_string($username_chars) . $db->get_any_char());
 		$result = $db->sql_query_limit($sql, 10);
-		$user_list = array();
+
+		$user_list = [];
 
 		while ($row = $db->sql_fetchrow($result))
 		{
-			$user_list[] = array(
+			$user_list[] = [
 				'user_id'		=> (int) $row['user_id'],
-				'result'		=> $row['username'],
+				'result'		=> html_entity_decode($row['username']),
 				'username_full'	=> get_username_string('full', $row['user_id'], $row['username'], $row['user_colour']),
 				'display'		=> get_username_string('no_profile', $row['user_id'], $row['username'], $row['user_colour']),
-			);
+			];
 		}
 		$db->sql_freeresult($result);
+
 		$json_response = new \phpbb\json_response();
-		$json_response->send(array(
+
+		$json_response->send([
 			'keyword' => $username_chars,
 			'results' => $user_list,
-		));
+		]);
 
 	break;
 
@@ -950,6 +1032,11 @@ switch ($mode)
 		// The basic memberlist
 		$page_title = $user->lang['MEMBERLIST'];
 		$template_html = 'memberlist_body.html';
+
+		$template->assign_block_vars('navlinks', array(
+			'BREADCRUMB_NAME'	=> $page_title,
+			'U_BREADCRUMB'		=> append_sid("{$phpbb_root_path}memberlist.$phpEx"),
+		));
 
 		/* @var $pagination \phpbb\pagination */
 		$pagination = $phpbb_container->get('pagination');
@@ -973,7 +1060,7 @@ switch ($mode)
 		if ($auth->acl_get('u_viewonline'))
 		{
 			$sort_key_text['l'] = $user->lang['SORT_LAST_ACTIVE'];
-			$sort_key_sql['l'] = 'u.user_lastvisit';
+			$sort_key_sql['l'] = 'u.user_last_active';
 		}
 
 		$sort_key_text['m'] = $user->lang['SORT_RANK'];
@@ -1075,15 +1162,15 @@ switch ($mode)
 				{
 					if ($active_select === 'lt' && (int) $active[0] == 0 && (int) $active[1] == 0 && (int) $active[2] == 0)
 					{
-						$sql_where .= ' AND u.user_lastvisit = 0';
+						$sql_where .= ' AND u.user_last_active = 0';
 					}
 					else if ($active_select === 'gt')
 					{
-						$sql_where .= ' AND u.user_lastvisit ' . $find_key_match[$active_select] . ' ' . $active_time;
+						$sql_where .= ' AND u.user_last_active ' . $find_key_match[$active_select] . ' ' . $active_time;
 					}
 					else
 					{
-						$sql_where .= ' AND (u.user_lastvisit > 0 AND u.user_lastvisit < ' . $active_time . ')';
+						$sql_where .= ' AND (u.user_last_active > 0 AND u.user_last_active < ' . $active_time . ')';
 					}
 				}
 			}
@@ -1267,6 +1354,11 @@ switch ($mode)
 				unset($module);
 			}
 
+			$template->assign_block_vars('navlinks', array(
+				'BREADCRUMB_NAME'	=> $group_helper->get_name($group_row['group_name']),
+				'U_BREADCRUMB'		=> append_sid("{$phpbb_root_path}memberlist.$phpEx", "mode=group&amp;g=$group_id"),
+			));
+
 			$template->assign_vars(array(
 				'GROUP_DESC'	=> generate_text_for_display($group_row['group_desc'], $group_row['group_desc_uid'], $group_row['group_desc_bitfield'], $group_row['group_desc_options']),
 				'GROUP_NAME'	=> $group_helper->get_name($group_row['group_name']),
@@ -1298,10 +1390,10 @@ switch ($mode)
 
 		$order_by .= $sort_key_sql[$sort_key] . ' ' . (($sort_dir == 'a') ? 'ASC' : 'DESC');
 
-		// Unfortunately we must do this here for sorting by rank, else the sort order is applied wrongly
-		if ($sort_key == 'm')
+		// For sorting by non-unique columns (rank, posts) add unique sort key to avoid duplicated rows in results
+		if ($sort_key == 'm' || $sort_key == 'd')
 		{
-			$order_by .= ', u.user_posts DESC';
+			$order_by .= ', u.user_id ASC';
 		}
 
 		/**
@@ -1566,17 +1658,20 @@ switch ($mode)
 		if (count($user_list))
 		{
 			// Session time?! Session time...
-			$sql = 'SELECT session_user_id, MAX(session_time) AS session_time
+			$sql = 'SELECT session_user_id, MAX(session_time) AS session_time, MIN(session_viewonline) AS session_viewonline
 				FROM ' . SESSIONS_TABLE . '
 				WHERE session_time >= ' . (time() - $config['session_length']) . '
 					AND ' . $db->sql_in_set('session_user_id', $user_list) . '
 				GROUP BY session_user_id';
 			$result = $db->sql_query($sql);
 
-			$session_times = array();
+			$session_ary = [];
 			while ($row = $db->sql_fetchrow($result))
 			{
-				$session_times[$row['session_user_id']] = $row['session_time'];
+				$session_ary[$row['session_user_id']] = [
+					'session_time' => $row['session_time'],
+					'session_viewonline' => $row['session_viewonline'],
+				];
 			}
 			$db->sql_freeresult($result);
 
@@ -1640,8 +1735,9 @@ switch ($mode)
 			$id_cache = array();
 			while ($row = $db->sql_fetchrow($result))
 			{
-				$row['session_time'] = (!empty($session_times[$row['user_id']])) ? $session_times[$row['user_id']] : 0;
-				$row['last_visit'] = (!empty($row['session_time'])) ? $row['session_time'] : $row['user_lastvisit'];
+				$row['session_time'] = $session_ary[$row['user_id']]['session_time'] ?? 0;
+				$row['session_viewonline'] = $session_ary[$row['user_id']]['session_viewonline'] ?? 0;
+				$row['last_visit'] = $row['user_last_active'] ?: $row['session_time'];
 
 				$id_cache[$row['user_id']] = $row;
 			}

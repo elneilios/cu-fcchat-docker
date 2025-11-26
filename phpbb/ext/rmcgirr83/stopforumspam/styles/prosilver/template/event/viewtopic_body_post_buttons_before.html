@@ -1,5 +1,8 @@
-<!-- IF postrow.SFS_LINK -->
-	<li id="sfs{postrow.POST_ID}">
-		{postrow.SFS_LINK}
+{% if postrow.S_SFS %}
+	<li id="sfs{{ postrow.POST_ID }}">
+		<a href="{{ postrow.U_SFS }}" title="{{ lang('REPORT_TO_SFS') }}" data-ajax="reporttosfs" class="button button-icon-only">
+			<i class="icon fa-exchange fa-fw" aria-hidden="true"></i>
+			<span class="sr-only">{{ lang('BUTTON_SFS') }}</span>
+		</a>
 	</li>
-<!-- ENDIF -->
+{% endif %}

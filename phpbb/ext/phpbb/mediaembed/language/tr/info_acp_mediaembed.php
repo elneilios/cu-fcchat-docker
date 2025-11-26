@@ -19,13 +19,13 @@ if (empty($lang) || !is_array($lang))
 	$lang = [];
 }
 
-$lang = array_merge($lang,[
+$lang = array_merge($lang, [
 	'ACP_PHPBB_MEDIA_EMBED'				=> 'Medya (Ortam) Yerleştirme',
 	'ACP_PHPBB_MEDIA_EMBED_MANAGE'		=> 'Siteleri yönet',
 	'ACP_PHPBB_MEDIA_EMBED_SETTINGS'	=> 'Ayarlar',
 
 	// Log keys
-	'LOG_PHPBB_MEDIA_EMBED_CACHE_PURGED'=> '<strong>Media Embed cache purged</strong>',
+	'LOG_PHPBB_MEDIA_EMBED_CACHE_PURGED'=> '<strong>Medya (Ortam) Yerleştirme önbelleği temizlendi</strong>',
 	'LOG_PHPBB_MEDIA_EMBED_MANAGE'		=> '<strong>Medya (Ortam) Yerleştirme siteleri güncellendi</strong>',
 	'LOG_PHPBB_MEDIA_EMBED_SETTINGS'	=> '<strong>Medya (Ortam) Yerleştirme ayarları güncellendi</strong>',
 ]);

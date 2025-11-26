@@ -22,7 +22,7 @@
 <!-- ENDIF -->
 
 
-<div id="post-{MESSAGE_ID}" class="post pm has-profile<!-- IF S_POST_UNAPPROVED or S_POST_REPORTED --> reported<!-- ENDIF --><!-- IF S_ONLINE --> online<!-- ENDIF -->">
+<div id="post-{MESSAGE_ID}" class="post pm has-profile<!-- IF S_ONLINE --> online<!-- ENDIF -->">
 <div class="inner">
 
 	<dl class="postprofile" id="profile{MESSAGE_ID}">
@@ -32,7 +32,9 @@
 				<!-- IF AUTHOR_AVATAR --><a href="{U_MESSAGE_AUTHOR}" class="avatar">{AUTHOR_AVATAR}</a><!-- ENDIF -->
 				<!-- EVENT ucp_pm_viewmessage_avatar_after -->
 			</div>
+			{% EVENT ucp_pm_viewmessage_author_full_before %}
 			{MESSAGE_AUTHOR_FULL}
+			{% EVENT ucp_pm_viewmessage_author_full_after %}
 		</dt>
 
 		<!-- EVENT ucp_pm_viewmessage_rank_before -->

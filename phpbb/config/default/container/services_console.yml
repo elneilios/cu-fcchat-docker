@@ -162,14 +162,6 @@ services:
         tags:
             - { name: console.command }
 
-    console.command.fixup.recalculate_email_hash:
-        class: phpbb\console\command\fixup\recalculate_email_hash
-        arguments:
-            - '@user'
-            - '@dbal.conn'
-        tags:
-            - { name: console.command }
-
     console.command.fixup.update_hashes:
         class: phpbb\console\command\fixup\update_hashes
         arguments:
@@ -284,6 +276,22 @@ services:
             - '@language'
             - '@log'
             - '@user_loader'
+            - '%core.root_path%'
+            - '%core.php_ext%'
+        tags:
+            - { name: console.command }
+
+    console.command.user.delete_id:
+        class: phpbb\console\command\user\delete_id
+        arguments:
+            - '@dbal.conn'
+            - '@language'
+            - '@log'
+            - '@user'
+            - '@user_loader'
+            - '%tables.bots%'
+            - '%tables.user_group%'
+            - '%tables.users%'
             - '%core.root_path%'
             - '%core.php_ext%'
         tags:

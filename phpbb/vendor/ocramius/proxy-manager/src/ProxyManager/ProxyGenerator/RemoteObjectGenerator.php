@@ -1,31 +1,19 @@
 <?php
-/*
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
- * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * This software consists of voluntary contributions made by many individuals
- * and is licensed under the MIT license.
- */
+
+declare(strict_types=1);
 
 namespace ProxyManager\ProxyGenerator;
 
+use ProxyManager\Exception\InvalidProxiedClassException;
 use ProxyManager\Generator\Util\ClassGeneratorUtils;
+use ProxyManager\Proxy\RemoteObjectInterface;
 use ProxyManager\ProxyGenerator\Assertion\CanProxyAssertion;
-use ProxyManager\ProxyGenerator\RemoteObject\MethodGenerator\Constructor;
 use ProxyManager\ProxyGenerator\RemoteObject\MethodGenerator\MagicGet;
 use ProxyManager\ProxyGenerator\RemoteObject\MethodGenerator\MagicIsset;
 use ProxyManager\ProxyGenerator\RemoteObject\MethodGenerator\MagicSet;
 use ProxyManager\ProxyGenerator\RemoteObject\MethodGenerator\MagicUnset;
 use ProxyManager\ProxyGenerator\RemoteObject\MethodGenerator\RemoteObjectMethod;
+use ProxyManager\ProxyGenerator\RemoteObject\MethodGenerator\StaticProxyConstructor;
 use ProxyManager\ProxyGenerator\RemoteObject\PropertyGenerator\AdapterProperty;
 use ProxyManager\ProxyGenerator\Util\ProxiedMethodsFilter;
 use ReflectionClass;
@@ -46,12 +34,15 @@ class RemoteObjectGenerator implements ProxyGeneratorInterface
 {
     /**
      * {@inheritDoc}
+     *
+     * @throws InvalidProxiedClassException
+     * @throws \Zend\Code\Generator\Exception\InvalidArgumentException
      */
     public function generate(ReflectionClass $originalClass, ClassGenerator $classGenerator)
     {
         CanProxyAssertion::assertClassCanBeProxied($originalClass);
 
-        $interfaces = array('ProxyManager\\Proxy\\RemoteObjectInterface');
+        $interfaces = [RemoteObjectInterface::class];
 
         if ($originalClass->isInterface()) {
             $interfaces[] = $originalClass->getName();
@@ -68,7 +59,7 @@ class RemoteObjectGenerator implements ProxyGeneratorInterface
             },
             array_merge(
                 array_map(
-                    function (ReflectionMethod $method) use ($adapter, $originalClass) {
+                    function (ReflectionMethod $method) use ($adapter, $originalClass) : RemoteObjectMethod {
                         return RemoteObjectMethod::generateMethod(
                             new MethodReflection($method->getDeclaringClass()->getName(), $method->getName()),
                             $adapter,
@@ -77,16 +68,16 @@ class RemoteObjectGenerator implements ProxyGeneratorInterface
                     },
                     ProxiedMethodsFilter::getProxiedMethods(
                         $originalClass,
-                        array('__get', '__set', '__isset', '__unset')
+                        ['__get', '__set', '__isset', '__unset']
                     )
                 ),
-                array(
-                    new Constructor($originalClass, $adapter),
+                [
+                    new StaticProxyConstructor($originalClass, $adapter),
                     new MagicGet($originalClass, $adapter),
                     new MagicSet($originalClass, $adapter),
                     new MagicIsset($originalClass, $adapter),
                     new MagicUnset($originalClass, $adapter),
-                )
+                ]
             )
         );
     }

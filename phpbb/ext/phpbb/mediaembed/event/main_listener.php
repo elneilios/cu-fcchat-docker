@@ -25,6 +25,9 @@ use Symfony\Component\Yaml\Yaml;
  */
 class main_listener implements EventSubscriberInterface
 {
+	/** @var string A link to a rich content media site for demo purposes */
+	public const MEDIA_DEMO_URL = 'https://youtu.be/Ne18ZQ7LLI0';
+
 	/** @var auth */
 	protected $auth;
 
@@ -58,7 +61,7 @@ class main_listener implements EventSubscriberInterface
 	public static function getSubscribedEvents()
 	{
 		return [
-			'core.text_formatter_s9e_configure_after'	=> [['add_custom_sites', 3], ['enable_media_sites', 2], ['configure_url_parsing', 1]],
+			'core.text_formatter_s9e_configure_after'	=> [['add_custom_sites', 3], ['enable_media_sites', 2], ['configure_url_parsing', 1], ['modify_tag_templates', 0]],
 			'core.display_custom_bbcodes'				=> 'setup_media_bbcode',
 			'core.permissions'							=> 'set_permissions',
 			'core.help_manager_add_block_before'		=> 'media_embed_help',
@@ -66,19 +69,21 @@ class main_listener implements EventSubscriberInterface
 			'core.ucp_pm_compose_modify_parse_before'	=> 'check_pm_permission',
 			'core.message_parser_check_message'			=> [['check_signature'], ['check_magic_urls'], ['check_bbcode_enabled']],
 			'core.text_formatter_s9e_parser_setup'		=> [['disable_media_embed'], ['setup_cache_dir']],
+			'core.page_header' 							=> 'setup_media_configs',
+			'core.page_footer'							=> 'append_agreement',
 		];
 	}
 
 	/**
 	 * Constructor
 	 *
-	 * @param auth                  $auth
-	 * @param config                $config
-	 * @param db_text               $config_text
-	 * @param language              $language
-	 * @param template              $template
-	 * @param customsitescollection $custom_sites
-	 * @param string                $cache_dir
+	 * @param auth					$auth
+	 * @param config					$config
+	 * @param db_text				$config_text
+	 * @param language				$language
+	 * @param template				$template
+	 * @param customsitescollection	$custom_sites
+	 * @param string				$cache_dir
 	 */
 	public function __construct(auth $auth, config $config, db_text $config_text, language $language, template $template, customsitescollection $custom_sites, $cache_dir)
 	{
@@ -152,6 +157,28 @@ class main_listener implements EventSubscriberInterface
 	}
 
 	/**
+	 * Modify bbcode tag templates
+	 *
+	 * @param \phpbb\event\data $event The event object
+	 * @return void
+	 */
+	public function modify_tag_templates($event)
+	{
+		try
+		{
+			// force YouTube to use the no cookies until the user starts video playback
+			$tag = $event['configurator']->tags['YOUTUBE'];
+			$tag->template = str_replace('www.youtube.com', 'www.youtube-nocookie.com', $tag->template);
+
+			$event['configurator']->finalize();
+		}
+		catch (\RuntimeException $e)
+		{
+			// do nothing
+		}
+	}
+
+	/**
 	 * Set template switch for displaying the [media] BBCode button
 	 *
 	 * @return void
@@ -192,14 +219,14 @@ class main_listener implements EventSubscriberInterface
 			]);
 
 			$uid = $bitfield = $flags = '';
-			$demo_text = $this->language->lang('HELP_EMBEDDING_MEDIA_DEMO');
+			$demo_text = self::MEDIA_DEMO_URL;
 			generate_text_for_storage($demo_text, $uid, $bitfield, $flags, true, true);
 			$demo_display = generate_text_for_display($demo_text, $uid, $bitfield, $flags);
 			$list_sites = implode(', ', $this->get_siteIds());
 
 			$this->template->assign_block_vars('faq_block.faq_row', [
 				'FAQ_QUESTION'	=> $this->language->lang('HELP_EMBEDDING_MEDIA_QUESTION'),
-				'FAQ_ANSWER'	=> $this->language->lang('HELP_EMBEDDING_MEDIA_ANSWER', $demo_text, $demo_display, $list_sites),
+				'FAQ_ANSWER'	=> $this->language->lang('HELP_EMBEDDING_MEDIA_ANSWER', self::MEDIA_DEMO_URL, $demo_display, $list_sites),
 			]);
 		}
 	}
@@ -228,7 +255,7 @@ class main_listener implements EventSubscriberInterface
 	}
 
 	/**
-	 * setup a cache directory to improve scraping performance
+	 * Set up a cache directory to improve scraping performance
 	 *
 	 * @param \phpbb\event\data $event The event object
 	 * @return void
@@ -314,11 +341,19 @@ class main_listener implements EventSubscriberInterface
 	{
 		if (!$event['allow_bbcode'])
 		{
-			// Want to leave plugin enabled but it seems plugin won't work
+			// Want to leave plugin enabled, but it seems plugin won't work
 			// when tag is disabled, so we have to disable both it seems.
 			$this->disable_plugin = true;
 			$this->disable_tag = true;
 		}
+	}
+
+	public function setup_media_configs()
+	{
+		$this->template->assign_vars([
+			'S_MEDIA_EMBED_FULL_WIDTH' => $this->config->offsetGet('media_embed_full_width'),
+			'S_MEDIA_EMBED_MAX_WIDTHS' => json_decode($this->config_text->get('media_embed_max_width'), true),
+		]);
 	}
 
 	/**
@@ -331,5 +366,22 @@ class main_listener implements EventSubscriberInterface
 		$siteIds = $this->config_text->get('media_embed_sites');
 
 		return $siteIds ? json_decode($siteIds, true) : [];
+	}
+
+	/**
+	 * Appends additional language to the privacy policy agreement text.
+	 *
+	 * @return void
+	 */
+	public function append_agreement()
+	{
+		if (!$this->template->retrieve_var('S_AGREEMENT') || ($this->template->retrieve_var('AGREEMENT_TITLE') !== $this->language->lang('PRIVACY')))
+		{
+			return;
+		}
+
+		$this->language->add_lang('ucp', 'phpbb/mediaembed');
+
+		$this->template->append_var('AGREEMENT_TEXT', $this->language->lang('MEDIA_EMBED_PRIVACY_POLICY', $this->config['sitename']));
 	}
 }

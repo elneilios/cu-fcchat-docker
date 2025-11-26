@@ -22,6 +22,7 @@ if (!defined('IN_PHPBB'))
 class acp_main
 {
 	var $u_action;
+	private $php_ini;
 
 	function main($id, $mode)
 	{
@@ -99,6 +100,20 @@ class acp_main
 					default:
 						$confirm = true;
 						$confirm_lang = 'CONFIRM_OPERATION';
+
+						/**
+						 * Event to add confirm box for custom ACP quick actions
+						 *
+						 * @event core.acp_main_add_actions_confirm
+						 * @var	string	id				The module ID
+						 * @var	string	mode			The module mode
+						 * @var	string	action			Custom action type name
+						 * @var	boolean	confirm			Do we display the confirm box to run the custom action
+						 * @var	string	confirm_lang	Lang var name to display in confirm box
+						 * @since 3.3.15-RC1
+						 */
+						$vars = ['id', 'mode', 'action', 'confirm', 'confirm_lang'];
+						extract($phpbb_dispatcher->trigger_event('core.acp_main_add_actions_confirm', compact($vars)));
 				}
 
 				if ($confirm)
@@ -422,6 +437,19 @@ class acp_main
 							trigger_error('PURGE_SESSIONS_SUCCESS');
 						}
 					break;
+
+					default:
+						/**
+						 * Event to add custom ACP quick actions
+						 *
+						 * @event core.acp_main_add_actions
+						 * @var	string	id				The module ID
+						 * @var	string	mode			The module mode
+						 * @var	string	action			Custom action type name
+						 * @since 3.3.15-RC1
+						 */
+						$vars = ['id', 'mode', 'action'];
+						extract($phpbb_dispatcher->trigger_event('core.acp_main_add_actions', compact($vars)));
 				}
 			}
 		}
@@ -429,11 +457,11 @@ class acp_main
 		// Version check
 		$user->add_lang('install');
 
-		if ($auth->acl_get('a_server') && version_compare(PHP_VERSION, '7.1.3', '<'))
+		if ($auth->acl_get('a_server') && version_compare(PHP_VERSION, '7.2.0', '<'))
 		{
 			$template->assign_vars(array(
 				'S_PHP_VERSION_OLD'	=> true,
-				'L_PHP_VERSION_OLD'	=> sprintf($user->lang['PHP_VERSION_OLD'], PHP_VERSION, '7.1.3', '<a href="https://www.phpbb.com/support/docs/en/3.3/ug/quickstart/requirements">', '</a>'),
+				'L_PHP_VERSION_OLD'	=> sprintf($user->lang['PHP_VERSION_OLD'], PHP_VERSION, '7.2.0', '<a href="https://www.phpbb.com/support/docs/en/3.3/ug/quickstart/requirements">', '</a>'),
 			));
 		}
 
@@ -453,10 +481,11 @@ class acp_main
 				$template->assign_vars(array(
 					'S_VERSION_UP_TO_DATE'		=> empty($updates_available),
 					'S_VERSION_UPGRADEABLE'		=> !empty($upgrades_available),
+					'S_VERSIONCHECK_FORCE'		=> (bool) $recheck,
 					'UPGRADE_INSTRUCTIONS'		=> !empty($upgrades_available) ? $user->lang('UPGRADE_INSTRUCTIONS', $upgrades_available['current'], $upgrades_available['announcement']) : false,
 				));
 			}
-			catch (\RuntimeException $e)
+			catch (\phpbb\exception\runtime_exception $e)
 			{
 				$message = call_user_func_array(array($user, 'lang'), array_merge(array($e->getMessage()), $e->get_parameters()));
 				$template->assign_vars(array(
@@ -543,20 +572,13 @@ class acp_main
 			$files_per_day = $total_files;
 		}
 
-		if ($config['allow_attachments'] || $config['allow_pm_attach'])
-		{
-			$sql = 'SELECT COUNT(attach_id) AS total_orphan
-				FROM ' . ATTACHMENTS_TABLE . '
-				WHERE is_orphan = 1
-					AND filetime < ' . (time() - 3*60*60);
-			$result = $db->sql_query($sql);
-			$total_orphan = (int) $db->sql_fetchfield('total_orphan');
-			$db->sql_freeresult($result);
-		}
-		else
-		{
-			$total_orphan = false;
-		}
+		$sql = 'SELECT COUNT(attach_id) AS total_orphan
+			FROM ' . ATTACHMENTS_TABLE . '
+			WHERE is_orphan = 1
+				AND filetime < ' . (time() - 3*60*60);
+		$result = $db->sql_query($sql);
+		$total_orphan = (int) $db->sql_fetchfield('total_orphan');
+		$db->sql_freeresult($result);
 
 		$dbsize = get_database_size();
 
@@ -574,7 +596,6 @@ class acp_main
 			'DBSIZE'			=> $dbsize,
 			'UPLOAD_DIR_SIZE'	=> $upload_dir_size,
 			'TOTAL_ORPHAN'		=> $total_orphan,
-			'S_TOTAL_ORPHAN'	=> ($total_orphan === false) ? false : true,
 			'GZIP_COMPRESSION'	=> ($config['gzip_compress'] && @extension_loaded('zlib')) ? $user->lang['ON'] : $user->lang['OFF'],
 			'DATABASE_INFO'		=> $db->sql_server_info(),
 			'PHP_VERSION_INFO'	=> PHP_VERSION,
@@ -657,7 +678,7 @@ class acp_main
 		}
 
 		// Warn if install is still present
-		if (file_exists($phpbb_root_path . 'install') && !is_file($phpbb_root_path . 'install'))
+		if (!defined('IN_INSTALL') && !$phpbb_container->getParameter('allow_install_dir') && file_exists($phpbb_root_path . 'install') && !is_file($phpbb_root_path . 'install'))
 		{
 			$template->assign_var('S_REMOVE_INSTALL', true);
 		}
@@ -678,21 +699,33 @@ class acp_main
 			}
 		}
 
-		if (!defined('PHPBB_DISABLE_CONFIG_CHECK') && file_exists($phpbb_root_path . 'config.' . $phpEx) && $phpbb_filesystem->is_writable($phpbb_root_path . 'config.' . $phpEx))
+		if (!defined('PHPBB_DISABLE_CONFIG_CHECK'))
 		{
 			// World-Writable? (000x)
 			$template->assign_var('S_WRITABLE_CONFIG', (bool) (@fileperms($phpbb_root_path . 'config.' . $phpEx) & 0x0002));
 		}
 
+		$this->php_ini			= $phpbb_container->get('php_ini');
+		$func_overload			= $this->php_ini->getNumeric('mbstring.func_overload');
+		$encoding_translation	= $this->php_ini->getString('mbstring.encoding_translation');
+		$http_input				= $this->php_ini->getString('mbstring.http_input');
+		$http_output			= $this->php_ini->getString('mbstring.http_output');
+		$default_charset		= $this->php_ini->getString('default_charset');
+
 		if (extension_loaded('mbstring'))
 		{
-			$template->assign_vars(array(
+			/**
+			 * “mbstring.http_input” and “mbstring.http_output” are deprecated as of PHP 5.6.0
+			 * @link https://www.php.net/manual/mbstring.configuration.php#ini.mbstring.http-input
+			 */
+			$template->assign_vars([
 				'S_MBSTRING_LOADED'						=> true,
-				'S_MBSTRING_FUNC_OVERLOAD_FAIL'			=> (intval(@ini_get('mbstring.func_overload')) & (MB_OVERLOAD_MAIL | MB_OVERLOAD_STRING)),
-				'S_MBSTRING_ENCODING_TRANSLATION_FAIL'	=> (@ini_get('mbstring.encoding_translation') != 0),
-				'S_MBSTRING_HTTP_INPUT_FAIL'			=> !in_array(@ini_get('mbstring.http_input'), array('pass', '')),
-				'S_MBSTRING_HTTP_OUTPUT_FAIL'			=> !in_array(@ini_get('mbstring.http_output'), array('pass', '')),
-			));
+				'S_MBSTRING_FUNC_OVERLOAD_FAIL'			=> $func_overload && ($func_overload & (MB_OVERLOAD_MAIL | MB_OVERLOAD_STRING)),
+				'S_MBSTRING_ENCODING_TRANSLATION_FAIL'	=> $encoding_translation && ($encoding_translation != 0),
+				'S_MBSTRING_HTTP_INPUT_FAIL'			=> !empty($http_input),
+				'S_MBSTRING_HTTP_OUTPUT_FAIL'			=> !empty($http_output),
+				'S_DEFAULT_CHARSET_FAIL'				=> $default_charset !== null && strtolower($default_charset) !== 'utf-8',
+			]);
 		}
 
 		// Fill dbms version if not yet filled

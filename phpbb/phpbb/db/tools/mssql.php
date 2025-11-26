@@ -30,7 +30,7 @@ class mssql extends tools
 	 *
 	 * @return array
 	 */
-	public static function get_dbms_type_map()
+	static public function get_dbms_type_map()
 	{
 		return array(
 			'mssql'		=> array(
@@ -182,7 +182,7 @@ class mssql extends tools
 
 			if (isset($prepared_column['auto_increment']) && $prepared_column['auto_increment'] && strlen($column_name) > 26) // "${column_name}_gen"
 			{
-				trigger_error("Index name '${column_name}_gen' on table '$table_name' is too long. The maximum auto increment column length is 26 characters.", E_USER_ERROR);
+				trigger_error("Index name '{$column_name}_gen' on table '$table_name' is too long. The maximum auto increment column length is 26 characters.", E_USER_ERROR);
 			}
 
 			// here we add the definition of the new column to the list of columns
@@ -194,7 +194,7 @@ class mssql extends tools
 				$primary_key_gen = isset($prepared_column['primary_key_set']) && $prepared_column['primary_key_set'];
 			}
 
-			// create sequence DDL based off of the existance of auto incrementing columns
+			// create sequence DDL based off of the existence of auto incrementing columns
 			if (!$create_sequence && isset($prepared_column['auto_increment']) && $prepared_column['auto_increment'])
 			{
 				$create_sequence = $column_name;

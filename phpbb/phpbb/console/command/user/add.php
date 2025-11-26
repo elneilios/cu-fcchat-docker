@@ -239,7 +239,7 @@ class add extends command
 				array('string', false, $this->config['min_name_chars'], $this->config['max_name_chars']),
 				array('username', '')),
 			'new_password' => array(
-				array('string', false, $this->config['min_pass_chars'], $this->config['max_pass_chars']),
+				array('string', false, $this->config['min_pass_chars'], 0),
 				array('password')),
 			'email'        => array(
 				array('string', false, 6, 60),
@@ -290,17 +290,16 @@ class add extends command
 		{
 			case USER_ACTIVATION_SELF:
 				$email_template = 'user_welcome_inactive';
-				$user_actkey = gen_rand_string(mt_rand(6, 10));
 			break;
 			case USER_ACTIVATION_ADMIN:
 				$email_template = 'admin_welcome_inactive';
-				$user_actkey = gen_rand_string(mt_rand(6, 10));
 			break;
 			default:
 				$email_template = 'user_welcome';
-				$user_actkey = '';
 			break;
 		}
+
+		$user_actkey = $this->get_activation_key($user_id);
 
 		if (!class_exists('messenger'))
 		{
@@ -312,13 +311,42 @@ class add extends command
 		$messenger->to($this->data['email'], $this->data['username']);
 		$messenger->anti_abuse_headers($this->config, $this->user);
 		$messenger->assign_vars(array(
-			'WELCOME_MSG' => htmlspecialchars_decode($this->language->lang('WELCOME_SUBJECT', $this->config['sitename'])),
-			'USERNAME'    => htmlspecialchars_decode($this->data['username']),
-			'PASSWORD'    => htmlspecialchars_decode($this->data['new_password']),
+			'WELCOME_MSG' => html_entity_decode($this->language->lang('WELCOME_SUBJECT', $this->config['sitename']), ENT_COMPAT),
+			'USERNAME'    => html_entity_decode($this->data['username'], ENT_COMPAT),
+			'PASSWORD'    => html_entity_decode($this->data['new_password'], ENT_COMPAT),
 			'U_ACTIVATE'  => generate_board_url() . "/ucp.{$this->php_ext}?mode=activate&u=$user_id&k=$user_actkey")
 		);
 
 		$messenger->send(NOTIFY_EMAIL);
+	}
+
+	/**
+	 * Get user activation key
+	 *
+	 * @param int $user_id User ID
+	 *
+	 * @return string User activation key for user
+	 */
+	protected function get_activation_key(int $user_id): string
+	{
+		$user_actkey = '';
+
+		if ($this->config['require_activation'] == USER_ACTIVATION_SELF || $this->config['require_activation'] == USER_ACTIVATION_ADMIN)
+		{
+			$user_actkey = gen_rand_string(mt_rand(6, 10));
+
+			$sql_ary = [
+				'user_actkey'				=> $user_actkey,
+				'user_actkey_expiration'	=> user::get_token_expiration(),
+			];
+
+			$sql = 'UPDATE ' . USERS_TABLE . '
+				SET ' . $this->db->sql_build_array('UPDATE', $sql_ary) . '
+				WHERE user_id = ' . (int) $user_id;
+			$this->db->sql_query($sql);
+		}
+
+		return $user_actkey;
 	}
 
 	/**

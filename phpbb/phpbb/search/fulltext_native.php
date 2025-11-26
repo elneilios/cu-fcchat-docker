@@ -109,6 +109,12 @@ class fulltext_native extends \phpbb\search\base
 	* Initialises the fulltext_native search backend with min/max word length
 	*
 	* @param	boolean|string	&$error	is passed by reference and should either be set to false on success or an error message on failure
+	* @param	string	$phpbb_root_path	phpBB root path
+	* @param	string	$phpEx	PHP file extension
+	* @param	\phpbb\auth\auth	$auth	Auth object
+	* @param	\phpbb\config\config	$config	Config object
+	* @param	\phpbb\db\driver\driver_interface	$db	Database object
+	* @param	\phpbb\user	$user	User object
 	* @param	\phpbb\event\dispatcher_interface	$phpbb_dispatcher	Event dispatcher object
 	*/
 	public function __construct(&$error, $phpbb_root_path, $phpEx, $auth, $config, $db, $user, $phpbb_dispatcher)
@@ -247,6 +253,16 @@ class fulltext_native extends \phpbb\search\base
 						$keywords[$i] = ' ';
 					break;
 					case '-':
+						// Ignore hyphen if followed by a space
+						if (isset($keywords[$i + 1]) && $keywords[$i + 1] == ' ')
+						{
+							$keywords[$i] = ' ';
+						}
+						else
+						{
+							$space = $keywords[$i];
+						}
+					break;
 					case '+':
 						$space = $keywords[$i];
 					break;
@@ -283,7 +299,11 @@ class fulltext_native extends \phpbb\search\base
 		);
 
 		$keywords = preg_replace($match, $replace, $keywords);
-		$num_keywords = count(explode(' ', $keywords));
+
+		// Ensure a space exists before +, - and | to make the split and count work correctly
+		$countable_keywords = preg_replace('/(?<!\s)(\+|\-|\|)/', ' $1', $keywords);
+
+		$num_keywords = count(explode(' ', $countable_keywords));
 
 		// We limit the number of allowed keywords to minimize load on the database
 		if ($this->config['max_num_search_keywords'] && $num_keywords > $this->config['max_num_search_keywords'])
@@ -351,7 +371,7 @@ class fulltext_native extends \phpbb\search\base
 			$this->db->sql_freeresult($result);
 		}
 
-		// Handle +, - without preceeding whitespace character
+		// Handle +, - without preceding whitespace character
 		$match		= array('#(\S)\+#', '#(\S)-#');
 		$replace	= array('$1 +', '$1 +');
 
@@ -377,7 +397,7 @@ class fulltext_native extends \phpbb\search\base
 				$word = substr($word, 1);
 
 				// a group of which at least one may not be in the resulting posts
-				if ($word[0] == '(')
+				if (isset($word[0]) && $word[0] == '(')
 				{
 					$word = array_unique(explode('|', substr($word, 1, -1)));
 					$mode = 'must_exclude_one';
@@ -399,7 +419,7 @@ class fulltext_native extends \phpbb\search\base
 				}
 
 				// a group of words of which at least one word should be in every resulting post
-				if ($word[0] == '(')
+				if (isset($word[0]) && $word[0] == '(')
 				{
 					$word = array_unique(explode('|', substr($word, 1, -1)));
 				}
@@ -618,7 +638,7 @@ class fulltext_native extends \phpbb\search\base
 		$w_num = 0;
 
 		$sql_array = array(
-			'SELECT'	=> ($type == 'posts') ? 'p.post_id' : 'p.topic_id',
+			'SELECT'	=> ($type == 'posts') ? 'DISTINCT p.post_id' : 'DISTINCT p.topic_id',
 			'FROM'		=> array(
 				SEARCH_WORDMATCH_TABLE	=> array(),
 				SEARCH_WORDLIST_TABLE	=> array(),
@@ -782,6 +802,8 @@ class fulltext_native extends \phpbb\search\base
 		$must_not_contain_ids = $this->must_not_contain_ids;
 		$must_contain_ids = $this->must_contain_ids;
 
+		$sql_sort_table = $sql_sort_join = $sql_match = $sql_match_where = $sql_sort = '';
+
 		/**
 		* Allow changing the query used for counting for posts using fulltext_native
 		*
@@ -889,11 +911,7 @@ class fulltext_native extends \phpbb\search\base
 
 			switch ($this->db->get_sql_layer())
 			{
-				case 'mysql4':
 				case 'mysqli':
-
-					// 3.x does not support SQL_CALC_FOUND_ROWS
-					// $sql_array['SELECT'] = 'SQL_CALC_FOUND_ROWS ' . $sql_array['SELECT'];
 					$is_mysql = true;
 
 				break;
@@ -951,16 +969,10 @@ class fulltext_native extends \phpbb\search\base
 			);
 		}
 
-		// if using mysql and the total result count is not calculated yet, get it from the db
-		if (!$total_results && $is_mysql)
-		{
-			// Also count rows for the query as if there was not LIMIT. Add SQL_CALC_FOUND_ROWS to SQL
-			$sql_array['SELECT'] = 'SQL_CALC_FOUND_ROWS ' . $sql_array['SELECT'];
-		}
-
 		$sql_array['WHERE'] = implode(' AND ', $sql_where);
 		$sql_array['GROUP_BY'] = ($group_by) ? (($type == 'posts') ? 'p.post_id' : 'p.topic_id') . ', ' . $sort_by_sql[$sort_key] : '';
 		$sql_array['ORDER_BY'] = $sql_sort;
+		$sql_array['SELECT'] .= $sort_by_sql[$sort_key] ? ", {$sort_by_sql[$sort_key]}" : '';
 
 		unset($sql_where, $sql_sort, $group_by);
 
@@ -973,12 +985,12 @@ class fulltext_native extends \phpbb\search\base
 		}
 		$this->db->sql_freeresult($result);
 
+		// If using mysql and the total result count is not calculated yet, get it from the db
 		if (!$total_results && $is_mysql)
 		{
-			// Get the number of results as calculated by MySQL
-			$sql_count = 'SELECT FOUND_ROWS() as total_results';
+			$sql_count = str_replace("SELECT {$sql_array['SELECT']}", "SELECT COUNT({$sql_array['SELECT']}) as total_results", $sql);
 			$result = $this->db->sql_query($sql_count);
-			$total_results = (int) $this->db->sql_fetchfield('total_results');
+			$total_results = $sql_array['GROUP_BY'] ? count($this->db->sql_fetchrowset($result)) : $this->db->sql_fetchfield('total_results');
 			$this->db->sql_freeresult($result);
 
 			if (!$total_results)
@@ -998,7 +1010,6 @@ class fulltext_native extends \phpbb\search\base
 				$id_ary[] = (int) $row[(($type == 'posts') ? 'post_id' : 'topic_id')];
 			}
 			$this->db->sql_freeresult($result);
-
 		}
 
 		// store the ids, from start on then delete anything that isn't on the current page because we only need ids for one page
@@ -1130,6 +1141,7 @@ class fulltext_native extends \phpbb\search\base
 		}
 
 		$select = ($type == 'posts') ? 'p.post_id' : 't.topic_id';
+		$select .= $sort_by_sql[$sort_key] ? ", {$sort_by_sql[$sort_key]}" : '';
 		$is_mysql = false;
 
 		/**
@@ -1184,9 +1196,7 @@ class fulltext_native extends \phpbb\search\base
 		{
 			switch ($this->db->get_sql_layer())
 			{
-				case 'mysql4':
 				case 'mysqli':
-//					$select = 'SQL_CALC_FOUND_ROWS ' . $select;
 					$is_mysql = true;
 				break;
 
@@ -1279,15 +1289,9 @@ class fulltext_native extends \phpbb\search\base
 
 		if (!$total_results && $is_mysql)
 		{
-			// Count rows for the executed queries. Replace $select within $sql with SQL_CALC_FOUND_ROWS, and run it.
-			$sql_calc = str_replace('SELECT ' . $select, 'SELECT SQL_CALC_FOUND_ROWS ' . $select, $sql);
-
-			$result = $this->db->sql_query($sql_calc);
-			$this->db->sql_freeresult($result);
-
-			$sql_count = 'SELECT FOUND_ROWS() as total_results';
+			$sql_count = str_replace("SELECT $select", "SELECT COUNT(*) as total_results", $sql);
 			$result = $this->db->sql_query($sql_count);
-			$total_results = (int) $this->db->sql_fetchfield('total_results');
+			$total_results = ($type == 'posts') ? (int) $this->db->sql_fetchfield('total_results') : count($this->db->sql_fetchrowset($result));
 			$this->db->sql_freeresult($result);
 
 			if (!$total_results)
@@ -1824,7 +1828,7 @@ class fulltext_native extends \phpbb\search\base
 		/**
 		* Replace HTML entities and NCRs
 		*/
-		$text = htmlspecialchars_decode(utf8_decode_ncr($text), ENT_QUOTES);
+		$text = html_entity_decode(utf8_decode_ncr($text), ENT_QUOTES);
 
 		/**
 		* Normalize to NFC

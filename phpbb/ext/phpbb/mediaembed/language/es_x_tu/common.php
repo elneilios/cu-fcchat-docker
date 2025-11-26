@@ -37,6 +37,6 @@ if (empty($lang) || !is_array($lang))
 // ’ » “ ” …
 //
 
-$lang = array_merge($lang,[
-	'BBCODE_MEDIA_HELP'	=> 'Media Embed: [media]http://media_url[/media]',
+$lang = array_merge($lang, [
+	'BBCODE_MEDIA_HELP'	=> 'Media Embed: [media]http://URL_media[/media]',
 ]);

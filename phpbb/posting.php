@@ -29,9 +29,6 @@ $auth->acl($user->data);
 
 
 // Grab only parameters needed here
-$post_id	= $request->variable('p', 0);
-$topic_id	= $request->variable('t', 0);
-$forum_id	= $request->variable('f', 0);
 $draft_id	= $request->variable('d', 0);
 
 $preview	= (isset($_POST['preview'])) ? true : false;
@@ -40,9 +37,86 @@ $load		= (isset($_POST['load'])) ? true : false;
 $confirm	= $request->is_set_post('confirm');
 $cancel		= (isset($_POST['cancel']) && !isset($_POST['save'])) ? true : false;
 
-$refresh	= (isset($_POST['add_file']) || isset($_POST['delete_file']) || isset($_POST['cancel_unglobalise']) || $save || $load || $preview);
+$refresh	= (isset($_POST['add_file']) || isset($_POST['delete_file']) || $save || $load || $preview);
 $submit = $request->is_set_post('post') && !$refresh && !$preview;
 $mode		= $request->variable('mode', '');
+
+// Only assign required URL parameters
+$forum_id = 0;
+$topic_id = 0;
+$post_id = 0;
+
+switch ($mode)
+{
+	case 'popup':
+	case 'smilies':
+		$forum_id = $request->variable('f', 0);
+	break;
+
+	case 'post':
+		$forum_id = $request->variable('f', 0);
+		if (!$forum_id)
+		{
+			trigger_error('NO_FORUM');
+		}
+	break;
+
+	case 'bump':
+	case 'reply':
+		$topic_id = $request->variable('t', 0);
+		if ($topic_id)
+		{
+			$sql = 'SELECT forum_id
+				FROM ' . TOPICS_TABLE . "
+				WHERE topic_id = $topic_id";
+			$result = $db->sql_query($sql);
+			$forum_id = (int) $db->sql_fetchfield('forum_id');
+			$db->sql_freeresult($result);
+		}
+
+		if (!$topic_id || !$forum_id)
+		{
+			trigger_error('NO_TOPIC');
+		}
+	break;
+
+	case 'edit':
+	case 'delete':
+	case 'quote':
+	case 'soft_delete':
+		$post_id = $request->variable('p', 0);
+		if ($post_id)
+		{
+			$topic_forum = [];
+
+			$sql = 'SELECT t.topic_id, t.forum_id
+				FROM ' . TOPICS_TABLE . ' t, ' . POSTS_TABLE . ' p
+				WHERE p.post_id = ' . $post_id . '
+				AND t.topic_id = p.topic_id';
+			$result = $db->sql_query($sql);
+			$topic_forum = $db->sql_fetchrow($result);
+			$db->sql_freeresult($result);
+		}
+
+		if (!$post_id || !$topic_forum)
+		{
+			$user->setup('posting');
+			trigger_error('NO_POST');
+		}
+
+		// Need to update session forum_id to valid value for proper viewonline information
+		if (!$forum_id)
+		{
+			$user->page['forum'] = (int) $topic_forum['forum_id'];
+			$user->update_session_page = true;
+			$user->update_session_infos();
+		}
+
+		$topic_id = (int) $topic_forum['topic_id'];
+		$forum_id = (int) $topic_forum['forum_id'];
+
+	break;
+}
 
 // If the user is not allowed to delete the post, we try to soft delete it, so we overwrite the mode here.
 if ($mode == 'delete' && (($confirm && !$request->is_set_post('delete_permanent')) || !$auth->acl_gets('f_delete', 'm_delete', $forum_id)))
@@ -104,14 +178,8 @@ extract($phpbb_dispatcher->trigger_event('core.modify_posting_parameters', compa
 // Was cancel pressed? If so then redirect to the appropriate page
 if ($cancel)
 {
-	$f = ($forum_id) ? 'f=' . $forum_id . '&amp;' : '';
-	$redirect = ($post_id) ? append_sid("{$phpbb_root_path}viewtopic.$phpEx", $f . 'p=' . $post_id) . '#p' . $post_id : (($topic_id) ? append_sid("{$phpbb_root_path}viewtopic.$phpEx", $f . 't=' . $topic_id) : (($forum_id) ? append_sid("{$phpbb_root_path}viewforum.$phpEx", 'f=' . $forum_id) : append_sid("{$phpbb_root_path}index.$phpEx")));
+	$redirect = ($post_id) ? append_sid("{$phpbb_root_path}viewtopic.$phpEx", 'p=' . $post_id) . '#p' . $post_id : (($topic_id) ? append_sid("{$phpbb_root_path}viewtopic.$phpEx", 't=' . $topic_id) : (($forum_id) ? append_sid("{$phpbb_root_path}viewforum.$phpEx", 'f=' . $forum_id) : append_sid("{$phpbb_root_path}index.$phpEx")));
 	redirect($redirect);
-}
-
-if (in_array($mode, array('post', 'reply', 'quote', 'edit', 'delete')) && !$forum_id)
-{
-	trigger_error('NO_FORUM');
 }
 
 /* @var $phpbb_content_visibility \phpbb\content_visibility */
@@ -128,21 +196,6 @@ switch ($mode)
 
 	case 'bump':
 	case 'reply':
-		if (!$topic_id)
-		{
-			trigger_error('NO_TOPIC');
-		}
-
-		// Force forum id
-		$sql = 'SELECT forum_id
-			FROM ' . TOPICS_TABLE . '
-			WHERE topic_id = ' . $topic_id;
-		$result = $db->sql_query($sql);
-		$f_id = (int) $db->sql_fetchfield('forum_id');
-		$db->sql_freeresult($result);
-
-		$forum_id = (!$f_id) ? $forum_id : $f_id;
-
 		$sql = 'SELECT f.*, t.*
 			FROM ' . TOPICS_TABLE . ' t, ' . FORUMS_TABLE . " f
 			WHERE t.topic_id = $topic_id
@@ -154,22 +207,6 @@ switch ($mode)
 	case 'edit':
 	case 'delete':
 	case 'soft_delete':
-		if (!$post_id)
-		{
-			$user->setup('posting');
-			trigger_error('NO_POST');
-		}
-
-		// Force forum id
-		$sql = 'SELECT forum_id
-			FROM ' . POSTS_TABLE . '
-			WHERE post_id = ' . $post_id;
-		$result = $db->sql_query($sql);
-		$f_id = (int) $db->sql_fetchfield('forum_id');
-		$db->sql_freeresult($result);
-
-		$forum_id = (!$f_id) ? $forum_id : $f_id;
-
 		$sql = 'SELECT f.*, t.*, p.*, u.username, u.username_clean, u.user_sig, u.user_sig_bbcode_uid, u.user_sig_bbcode_bitfield
 			FROM ' . POSTS_TABLE . ' p, ' . TOPICS_TABLE . ' t, ' . FORUMS_TABLE . ' f, ' . USERS_TABLE . " u
 			WHERE p.post_id = $post_id
@@ -255,11 +292,6 @@ if ($mode == 'popup')
 }
 
 $user->setup(array('posting', 'mcp', 'viewtopic'), $post_data['forum_style']);
-
-// Use post_row values in favor of submitted ones...
-$forum_id	= (!empty($post_data['forum_id'])) ? (int) $post_data['forum_id'] : (int) $forum_id;
-$topic_id	= (!empty($post_data['topic_id'])) ? (int) $post_data['topic_id'] : (int) $topic_id;
-$post_id	= (!empty($post_data['post_id'])) ? (int) $post_data['post_id'] : (int) $post_id;
 
 // Need to login to passworded forum first?
 if ($post_data['forum_password'])
@@ -434,7 +466,7 @@ if ($post_data['forum_type'] != FORUM_POST && in_array($mode, array('post', 'bum
 }
 
 // Forum/Topic locked?
-if (($post_data['forum_status'] == ITEM_LOCKED || (isset($post_data['topic_status']) && $post_data['topic_status'] == ITEM_LOCKED)) && !$auth->acl_get('m_edit', $forum_id))
+if (($post_data['forum_status'] == ITEM_LOCKED || (isset($post_data['topic_status']) && $post_data['topic_status'] == ITEM_LOCKED)) && !$auth->acl_get($mode == 'reply' ? 'm_lock' : 'm_edit', $forum_id))
 {
 	trigger_error(($post_data['forum_status'] == ITEM_LOCKED) ? 'FORUM_LOCKED' : 'TOPIC_LOCKED');
 }
@@ -729,6 +761,29 @@ $url_status		= ($config['allow_post_links']) ? true : false;
 $flash_status	= ($bbcode_status && $auth->acl_get('f_flash', $forum_id) && $config['allow_post_flash']) ? true : false;
 $quote_status	= true;
 
+/**
+ * Event to override message BBCode status indications
+ *
+ * @event core.posting_modify_bbcode_status
+ *
+ * @var bool	bbcode_status	BBCode status
+ * @var bool	smilies_status	Smilies status
+ * @var bool	img_status		Image BBCode status
+ * @var bool	url_status		URL BBCode status
+ * @var bool	flash_status	Flash BBCode status
+ * @var bool	quote_status	Quote BBCode status
+ * @since 3.3.3-RC1
+ */
+$vars = [
+	'bbcode_status',
+	'smilies_status',
+	'img_status',
+	'url_status',
+	'flash_status',
+	'quote_status',
+];
+extract($phpbb_dispatcher->trigger_event('core.posting_modify_bbcode_status', compact($vars)));
+
 // Save Draft
 if ($save && $user->data['is_registered'] && $auth->acl_get('u_savedrafts') && ($mode == 'reply' || $mode == 'post' || $mode == 'quote'))
 {
@@ -763,7 +818,7 @@ if ($save && $user->data['is_registered'] && $auth->acl_get('u_savedrafts') && (
 			$attachment_manager = $phpbb_container->get('attachment.manager');
 			$attachment_manager->delete('attach', array_column($message_parser->attachment_data, 'attach_id'));
 
-			$meta_info = ($mode == 'post') ? append_sid("{$phpbb_root_path}viewforum.$phpEx", 'f=' . $forum_id) : append_sid("{$phpbb_root_path}viewtopic.$phpEx", "f=$forum_id&amp;t=$topic_id");
+			$meta_info = ($mode == 'post') ? append_sid("{$phpbb_root_path}viewforum.$phpEx", 'f=' . $forum_id) : append_sid("{$phpbb_root_path}viewtopic.$phpEx", "t=$topic_id");
 
 			meta_refresh(3, $meta_info);
 
@@ -793,6 +848,7 @@ if ($save && $user->data['is_registered'] && $auth->acl_get('u_savedrafts') && (
 				'disable_smilies'	=> false,
 				'disable_magic_url'	=> false,
 				'attach_sig'		=> true,
+				'notify'			=> false,
 				'lock_topic'		=> false,
 
 				'topic_type'		=> POST_NORMAL,
@@ -1374,7 +1430,14 @@ if ($submit || $preview || $refresh)
 	// Store message, sync counters
 	if (!count($error) && $submit)
 	{
-		if ($submit)
+		/** @var \phpbb\lock\posting $posting_lock */
+		$posting_lock = $phpbb_container->get('posting.lock');
+
+		// Get creation time and form token, must be already checked at this point
+		$creation_time	= abs($request->variable('creation_time', 0));
+		$form_token = $request->variable('form_token', '');
+
+		if ($posting_lock->acquire($creation_time, $form_token))
 		{
 			// Lock/Unlock Topic
 			$change_topic_status = $post_data['topic_status'];
@@ -1564,6 +1627,11 @@ if ($submit || $preview || $refresh)
 			}
 
 			redirect($redirect_url);
+		}
+		else
+		{
+			// Posting was already locked before, hence form submission was already attempted once and is now invalid
+			$error[] = $language->lang('FORM_INVALID');
 		}
 	}
 }
@@ -1792,23 +1860,28 @@ $notify_set			= ($mode != 'edit' && $config['allow_topic_notify'] && $user->data
 $notify_checked		= (isset($notify)) ? $notify : (($mode == 'post') ? $user->data['user_notify'] : $notify_set);
 
 // Page title & action URL
-$s_action = append_sid("{$phpbb_root_path}posting.$phpEx", "mode=$mode&amp;f=$forum_id");
-$s_action .= ($topic_id) ? "&amp;t=$topic_id" : '';
-$s_action .= ($post_id) ? "&amp;p=$post_id" : '';
+$s_action = append_sid("{$phpbb_root_path}posting.$phpEx", "mode=$mode");
 
 switch ($mode)
 {
 	case 'post':
+		$s_action .= $forum_id ? "&amp;f=$forum_id" : '';
 		$page_title = $user->lang['POST_TOPIC'];
 	break;
 
-	case 'quote':
 	case 'reply':
+		$s_action .= $topic_id ? "&amp;t=$topic_id" : '';
+		$page_title = $user->lang['POST_REPLY'];
+	break;
+
+	case 'quote':
+		$s_action .= $post_id ? "&amp;p=$post_id" : '';
 		$page_title = $user->lang['POST_REPLY'];
 	break;
 
 	case 'delete':
 	case 'edit':
+		$s_action .= $post_id ? "&amp;p=$post_id" : '';
 		$page_title = $user->lang['EDIT_POST'];
 	break;
 }
@@ -1879,7 +1952,7 @@ $page_data = array(
 	'EDIT_REASON'			=> $request->variable('edit_reason', '', true),
 	'SHOW_PANEL'			=> $request->variable('show_panel', ''),
 	'U_VIEW_FORUM'			=> append_sid("{$phpbb_root_path}viewforum.$phpEx", "f=$forum_id"),
-	'U_VIEW_TOPIC'			=> ($mode != 'post') ? append_sid("{$phpbb_root_path}viewtopic.$phpEx", "f=$forum_id&amp;t=$topic_id") : '',
+	'U_VIEW_TOPIC'			=> ($mode != 'post') ? append_sid("{$phpbb_root_path}viewtopic.$phpEx", "t=$topic_id") : '',
 	'U_PROGRESS_BAR'		=> append_sid("{$phpbb_root_path}posting.$phpEx", "f=$forum_id&amp;mode=popup"),
 	'UA_PROGRESS_BAR'		=> addslashes(append_sid("{$phpbb_root_path}posting.$phpEx", "f=$forum_id&amp;mode=popup")),
 
@@ -1894,7 +1967,7 @@ $page_data = array(
 	'S_BBCODE_CHECKED'			=> ($bbcode_checked) ? ' checked="checked"' : '',
 	'S_SMILIES_ALLOWED'			=> $smilies_status,
 	'S_SMILIES_CHECKED'			=> ($smilies_checked) ? ' checked="checked"' : '',
-	'S_SIG_ALLOWED'				=> ($auth->acl_get('f_sigs', $forum_id) && $config['allow_sig'] && $user->data['is_registered']) ? true : false,
+	'S_SIG_ALLOWED'				=> ($user->data['is_registered'] && $config['allow_sig'] && $auth->acl_get('f_sigs', $forum_id) && $auth->acl_get('u_sig')) ? true : false,
 	'S_SIGNATURE_CHECKED'		=> ($sig_checked) ? ' checked="checked"' : '',
 	'S_NOTIFY_ALLOWED'			=> (!$user->data['is_registered'] || ($mode == 'edit' && $user->data['user_id'] != $post_data['poster_id']) || !$config['allow_topic_notify'] || !$config['email_enable']) ? false : true,
 	'S_NOTIFY_CHECKED'			=> ($notify_checked) ? ' checked="checked"' : '',
@@ -2028,7 +2101,7 @@ if ($allowed)
 }
 
 // Attachment entry
-posting_gen_attachment_entry($attachment_data, $filename_data, $allowed);
+posting_gen_attachment_entry($attachment_data, $filename_data, $allowed, $forum_id);
 
 // Output page ...
 page_header($page_title);

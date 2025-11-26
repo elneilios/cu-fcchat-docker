@@ -10,113 +10,226 @@
 
 namespace rmcgirr83\stopforumspam\core;
 
-use Symfony\Component\HttpFoundation\JsonResponse;
+/**
+* ignore
+**/
+use phpbb\auth\auth;
+use phpbb\config\config;
+use phpbb\db\driver\driver_interface as db;
+use phpbb\controller\helper;
+use phpbb\language\language;
+use phpbb\log\log;
+use phpbb\request\request;
+use phpbb\template\template;
+use phpbb\user;
+use rmcgirr83\stopforumspam\core\sfsgroups;
+use rmcgirr83\stopforumspam\core\sfsapi;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+
 use phpbb\exception\http_exception;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 class reporttosfs
 {
-	private $forumid = 0;
-	private $topicid = 0;
-	/** @var \phpbb\auth\auth */
+	/** @var auth $auth */
 	protected $auth;
 
-	/** @var \phpbb\config\config */
+	/** @var config $config */
 	protected $config;
+
+	/** @var db $db */
+	protected $db;
+
+	/** @var helper $helper */
+	protected $helper;
+
+	/** @var language $language */
+	protected $language;
+
+	/** @var log $log */
+	protected $log;
+
+	/** @var request $request */
+	protected $request;
+
+	/** @var template $template */
+	protected $template;
+
+	/** @var user $user */
+	protected $user;
+
+	/* @var sfsgroups $sfsgroups */
+	protected $sfsgroups;
+
+	/* @var sfsapi $sfsapi */
+	protected $sfsapi;
 
 	/** @var ContainerInterface */
 	protected $container;
 
-	/** @var \phpbb\db\driver\driver_interface */
-	protected $db;
+	/** @var string root_path */
+	protected $root_path;
 
-	/** @var \phpbb\log\log */
-	protected $log;
-
-	/** @var \phpbb\request\request */
-	protected $request;
-
-	/** @var \phpbb\user */
-	protected $user;
-
-	/* @var \rmcgirr83\stopforumspam\core\sfsgroups */
-	protected $sfsgroups;
-
-	/* @var \rmcgirr83\stopforumspam\core\sfsapi */
-	protected $sfsapi;
+	/** @var string php_ext */
+	protected $php_ext;
 
 	public function __construct(
-			\phpbb\auth\auth $auth,
-			\phpbb\config\config $config,
+			auth $auth,
+			config $config,
+			db $db,
+			helper $helper,
+			language $language,
+			log $log,
+			request $request,
+			template $template,
+			user $user,
+			sfsgroups $sfsgroups,
+			sfsapi $sfsapi,
 			ContainerInterface $container,
-			\phpbb\db\driver\driver_interface $db,
-			\phpbb\log\log $log,
-			\phpbb\request\request $request,
-			\phpbb\user $user,
-			\rmcgirr83\stopforumspam\core\sfsgroups $sfsgroups,
-			\rmcgirr83\stopforumspam\core\sfsapi $sfsapi)
+			string $root_path,
+			string $php_ext)
 	{
 		$this->auth = $auth;
 		$this->config = $config;
-		$this->container = $container;
+		$this->helper = $helper;
 		$this->db = $db;
+		$this->language = $language;
 		$this->log = $log;
 		$this->request = $request;
+		$this->template = $template;
 		$this->user = $user;
 		$this->sfsgroups = $sfsgroups;
 		$this->sfsapi = $sfsapi;
+		$this->container = $container;
+		$this->root_path = $root_path;
+		$this->php_ext = $php_ext;
 	}
 
 	/*
-	 * reporttosfs
-	 * @param 	$username 	username from forum inputs
-	 * @param	$userip		userip
-	 * @param	$useremail	useremail
-	 * @param	$postid		postid of the post
-	 * @param	$posterid	posterid that made the post
-	 * @return 	json response
+	* reporttosfs				reporting of post to stopforum database
+	* @param	int	$postid		postid of the post
+	* @param	int	$posterid	posterid that made the post
+	* @return 	json response
 	*/
-	public function reporttosfs($username, $userip, $useremail, $postid, $posterid, $forumid)
+	public function reporttosfs($postid, $posterid)
 	{
 		$postid = (int) $postid;
 		$posterid = (int) $posterid;
 
+		// don't allow banning of anonymous user
+		if ($posterid == ANONYMOUS)
+		{
+			throw new http_exception(403, 'CANNOT_REPORT_ANONYMOUS');
+		}
+
+		// post id must be greater than 0
 		if ($postid <= 0)
 		{
-			throw new http_exception(403, 'NO_POST_SELECTED');
+			throw new http_exception(403, 'POST_NOT_EXIST');
+		}
+
+		$sql = 'SELECT p.*, u.username, u.user_email
+			FROM ' . POSTS_TABLE . ' p
+			LEFT JOIN ' . USERS_TABLE . ' u on p.poster_id = u.user_id
+			WHERE p.post_id = ' . (int) $postid . ' AND p.poster_id = ' . (int) $posterid;
+		$result = $this->db->sql_query($sql);
+		$row = $this->db->sql_fetchrow($result);
+		$this->db->sql_freeresult($result);
+
+		// info must exist
+		if (!$row)
+		{
+			throw new http_exception(403, 'INFO_NOT_FOUND');
+		}
+
+		if (!function_exists('generate_text_for_display'))
+		{
+			include($this->root_path . 'includes/functions_privmsgs.' . $this->php_ext);
+		}
+		$username = $row['username'];
+		$userip = $row['poster_ip'];
+		$useremail = $row['user_email'];
+		$forumid = (int) $row['forum_id'];
+		$topicid = (int) $row['topic_id'];
+		$parse_flags = ($row['bbcode_bitfield'] ? OPTION_FLAG_BBCODE : 0);
+		$parse_flags |= ($row['enable_smilies'] ? OPTION_FLAG_SMILIES : 0);
+		$evidence = generate_text_for_display($row['post_text'], $row['bbcode_uid'], $row['bbcode_bitfield'], $parse_flags, true);
+		$sfs_reported = (int) $row['sfs_reported'];
+
+		$admins_mods = $this->sfsgroups->getadminsmods($forumid);
+
+		if (in_array($posterid, $admins_mods))
+		{
+			throw new http_exception(403, 'CANNOT_REPORT_ADMINS_MODS');
+		}
+
+		// ensure the IP is something other than 127.0.0.1 which can happen if the anonymised extension is installed
+		if (filter_var($userip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_RES_RANGE) === false)
+		{
+			throw new http_exception(403, 'SFS_ANONYMIZED_IP');
+		}
+
+		if ($sfs_reported)
+		{
+			throw new http_exception(403, 'SFS_REPORTED');
 		}
 
 		if (empty($this->config['allow_sfs']) || empty($this->config['sfs_api_key']) || empty($useremail) || empty($userip))
 		{
-			return false;
+			throw new http_exception(403, 'SFS_MISSING_DATA');
 		}
-		$admins_mods = $this->sfsgroups->getadminsmods($forumid);
-		// only allow this via ajax calls
-		if ($this->request->is_ajax() && in_array($this->user->data['user_id'], $admins_mods) && !in_array($posterid, $admins_mods) && $posterid != ANONYMOUS)
+
+		// fix confirm box non-ajax error (controller must return)
+		if ($this->request->is_set_post('cancel') && !$this->request->is_ajax())
 		{
-			$this->user->add_lang_ext('rmcgirr83/stopforumspam', array('stopforumspam', 'acp/acp_stopforumspam'));
+			$message = $this->language->lang('SFS_OPERATION_CANCELED') . '<br><br>' . $this->language->lang('RETURN_TOPIC', '<a href="' . append_sid("{$this->root_path}viewtopic.$this->php_ext?t=" . $topicid) . '">', '</a>');
 
-			$sql = 'SELECT sfs_reported
-				FROM ' . POSTS_TABLE . '
-				WHERE ' . $this->db->sql_in_set('post_id', array($postid));
-			$result = $this->db->sql_query($sql);
-			$sfs_done = (int) $this->db->sql_fetchfield('sfs_reported');
-			$this->db->sql_freeresult($result);
+			return $this->helper->message($message);
+		}
 
-			if ($sfs_done)
+		if (confirm_box(true))
+		{
+			$response = $this->sfsapi->sfsapi('add', $username, $userip, $useremail, $evidence, $this->config['sfs_api_key']);
+
+			$json_decode = json_decode($response, true);
+			// ajax stuffs
+			if (isset($json_decode[$this->language->lang('CURL_ERROR')]) && $this->request->is_ajax())
 			{
-				throw new http_exception(403, 'SFS_REPORTED');
-			}
-			$response = $this->sfsapi->sfsapi('add', $username, $userip, $useremail, $this->config['sfs_api_key']);
-
-			if (!$response)
-			{
-				$data = array(
-					'MESSAGE_TITLE'	=> $this->user->lang('ERROR'),
-					'MESSAGE_TEXT'	=> $this->user->lang('SFS_ERROR_MESSAGE'),
+				$data = [
+					'MESSAGE_TITLE'	=> $this->language->lang('AJAX_ERROR_TITLE'),
+					'MESSAGE_TEXT'	=> $json_decode[$this->language->lang('CURL_ERROR')],
 					'success'	=> false,
-				);
+				];
 				return new JsonResponse($data);
+			}
+			else if (!$response && $this->request->is_ajax())
+			{
+				$data = [
+					'MESSAGE_TITLE'	=> $this->language->lang('AJAX_ERROR_TITLE'),
+					'MESSAGE_TEXT'	=> $this->language->lang('SFS_ERROR_MESSAGE'),
+					'success'	=> false,
+				];
+				return new JsonResponse($data);
+			}
+			//non-ajax stuffs
+			else if (isset($json_decode[$this->language->lang('CURL_ERROR')]))
+			{
+				$this->template->assign_vars([
+					'MESSAGE_TITLE' => $this->language->lang('ERROR'),
+					'MESSAGE_TEXT'	=> $json_decode[$this->language->lang('CURL_ERROR')]
+				]);
+
+				return $this->helper->render('message_body.html');
+			}
+			else if (!$response)
+			{
+				$this->template->assign_vars([
+					'MESSAGE_TITLE' => $this->language->lang('ERROR'),
+					'MESSAGE_TEXT'	=> $this->language->lang('SFS_ERROR_MESSAGE')
+				]);
+
+				return $this->helper->render('message_body.html');
 			}
 
 			// Report the uhmmm reported?
@@ -130,78 +243,98 @@ class reporttosfs
 				WHERE post_id = ' . (int) $postid;
 			$this->db->sql_query($sql);
 
-			$sfs_username = $this->user->lang('SFS_USERNAME_STOPPED', $username);
+			$sfs_username = $this->language->lang('SFS_USERNAME_STOPPED', $username);
 
-			$this->log->add('mod', $this->user->data['user_id'], $this->user->ip, 'LOG_SFS_REPORTED', false, array($sfs_username, 'forum_id' => $this->forumid, 'topic_id' => $this->topicid, 'post_id'  => $postid));
+			$this->sfsapi->sfs_ban('user', $username);
 
-			$data = array(
-				'MESSAGE_TITLE'	=> $this->user->lang('SUCCESS'),
-				'MESSAGE_TEXT'	=> $this->user->lang('SFS_SUCCESS_MESSAGE'),
-				'success'	=> true,
-				'postid'	=> $postid,
-			);
-			return new JsonResponse($data);
+			$this->log->add('mod', $this->user->data['user_id'], $this->user->ip, 'LOG_SFS_REPORTED', false, [$sfs_username, 'forum_id' => $forumid, 'topic_id' => $topicid, 'post_id'  => $postid]);
+
+			if ($this->request->is_ajax())
+			{
+				$data = [
+					'MESSAGE_TITLE'	=> $this->language->lang('SFS_SUCCESS'),
+					'MESSAGE_TEXT'	=> $this->language->lang('SFS_SUCCESS_MESSAGE'),
+					'success'	=> true,
+					'postid'	=> $postid,
+				];
+				return new JsonResponse($data);
+			}
+			else
+			{
+				$this->template->assign_vars([
+					'MESSAGE_TITLE' => $this->language->lang('SFS_SUCCESS'),
+					'MESSAGE_TEXT'	=> $this->language->lang('SFS_SUCCESS_MESSAGE')
+				]);
+
+				return $this->helper->render('message_body.html');
+			}
 		}
-		throw new http_exception(403, 'NOT_AUTHORISED');
+		else
+		{
+			if ($this->request->is_ajax())
+			{
+				confirm_box(
+					false,
+					$this->language->lang('SFS_CONFIRM'),
+					'',
+					'confirm_body.html',
+					$this->helper->route(
+						'rmcgirr83_stopforumspam_core_reporttosfs',
+						[
+							'postid' => $postid,
+							'posterid' => $posterid,
+						],
+						true,
+						false,
+						UrlGeneratorInterface::ABSOLUTE_URL
+					)
+				);
+			}
+			else
+			{
+				confirm_box(false, $this->language->lang('SFS_CONFIRM'));
+			}
+		}
 	}
 
 	/*
-	 * check_report
-	 * @param 	$postid 	postid from the report to sfs
-	 * @return 	null
+	* check_report			check to see if the post msg has already been reported
+	* @param 	$postid 	postid from the report to sfs
+	* @return 	json|html	response if found
 	*/
 	private function check_report($postid)
 	{
-		$sql = 'SELECT t.*, p.*
-			FROM ' . POSTS_TABLE . ' p, ' . TOPICS_TABLE . ' t
-			WHERE p.post_id = ' . (int) $postid . '
-				AND p.topic_id = t.topic_id';
+		$sql = 'SELECT *
+			FROM ' . POSTS_TABLE . '
+			WHERE post_id = ' . (int) $postid;
 		$result = $this->db->sql_query($sql);
 		$report_data = $this->db->sql_fetchrow($result);
 		$this->db->sql_freeresult($result);
 
-		if (!$report_data)
+		if (!$report_data && $this->request->is_ajax())
 		{
-			$data = array(
-				'MESSAGE_TITLE'	=> $this->user->lang('ERROR'),
-				'MESSAGE_TEXT'	=> $this->user->lang('POST_NOT_EXIST'),
+			$data = [
+				'MESSAGE_TITLE'	=> $this->language->lang('ERROR'),
+				'MESSAGE_TEXT'	=> $this->language->lang('POST_NOT_EXIST'),
 				'success'	=> false,
-			);
+			];
 			return new JsonResponse($data);
 		}
-
-		$this->forumid						= (int) $report_data['forum_id'];
-		$this->topicid						= (int) $report_data['topic_id'];
-
-		$reported_post_text					= $report_data['post_text'];
-		$reported_post_bitfield				= $report_data['bbcode_bitfield'];
-		$reported_post_uid					= $report_data['bbcode_uid'];
-		$reported_post_enable_bbcode		= $report_data['enable_bbcode'];
-		$reported_post_enable_smilies		= $report_data['enable_smilies'];
-		$reported_post_enable_magic_url		= $report_data['enable_magic_url'];
-
-		$sql = 'SELECT *
-			FROM ' . FORUMS_TABLE . '
-			WHERE forum_id = ' . (int) $this->forumid;
-		$result = $this->db->sql_query($sql);
-		$forum_data = $this->db->sql_fetchrow($result);
-		$this->db->sql_freeresult($result);
-
-		if (!$forum_data)
+		else if (!$report_data)
 		{
-			$data = array(
-				'MESSAGE_TITLE'	=> $this->user->lang('ERROR'),
-				'MESSAGE_TEXT'	=> $this->user->lang('FORUM_NOT_EXIST'),
-				'success'	=> false,
-			);
-			return new JsonResponse($data);
+			$this->template->assign_vars([
+				'MESSAGE_TITLE'	=> $this->language->lang('ERROR'),
+				'MESSAGE_TEXT'	=> $this->language->lang('POST_NOT_EXIST'),
+			]);
+
+			return $this->helper->render('message_body.html');
 		}
 
 		// if the post isn't reported, then report it
 		if (!$report_data['post_reported'])
 		{
 			$report_name = 'other';
-			$report_text = $this->user->lang('SFS_WAS_REPORTED');
+			$report_text = $this->language->lang('SFS_WAS_REPORTED');
 
 			$sql = 'SELECT *
 				FROM ' . REPORTS_REASONS_TABLE . "
@@ -210,47 +343,8 @@ class reporttosfs
 			$row = $this->db->sql_fetchrow($result);
 			$this->db->sql_freeresult($result);
 
-			if ($row['reason_id'])
-			{
-				$sql_ary = array(
-					'reason_id'							=> (int) $row['reason_id'],
-					'post_id'							=> (int) $postid,
-					'pm_id'								=> 0,
-					'user_id'							=> (int) $this->user->data['user_id'],
-					'user_notify'						=> 0,
-					'report_closed'						=> 0,
-					'report_time'						=> (int) time(),
-					'report_text'						=> $report_text,
-					'reported_post_text'				=> $reported_post_text,
-					'reported_post_uid'					=> $reported_post_uid,
-					'reported_post_bitfield'			=> $reported_post_bitfield,
-					'reported_post_enable_bbcode'		=> $reported_post_enable_bbcode,
-					'reported_post_enable_smilies'		=> $reported_post_enable_smilies,
-					'reported_post_enable_magic_url'	=> $reported_post_enable_magic_url,
-				);
-
-				$sql = 'INSERT INTO ' . REPORTS_TABLE . ' ' . $this->db->sql_build_array('INSERT', $sql_ary);
-				$this->db->sql_query($sql);
-
-				$sql = 'UPDATE ' . POSTS_TABLE . '
-					SET post_reported = 1
-					WHERE post_id = ' . (int) $postid;
-				$this->db->sql_query($sql);
-
-				if (!$report_data['topic_reported'])
-				{
-					$sql = 'UPDATE ' . TOPICS_TABLE . '
-						SET topic_reported = 1
-						WHERE topic_id = ' . (int) $this->topicid . '
-							OR topic_moved_id = ' . (int) $this->topicid;
-					$this->db->sql_query($sql);
-				}
-
-				$phpbb_notifications = $this->container->get('notification_manager');
-				$phpbb_notifications->add_notifications('notification.type.report_post', array_merge($report_data, $row, $forum_data, array(
-					'report_text'	=> $report_text,
-				)));
-			}
+			$phpbb_notifications = $this->container->get('phpbb.report.handlers.report_handler_post');
+			$phpbb_notifications->add_report($postid, $row['reason_id'], $report_text, 0);
 		}
 	}
 }

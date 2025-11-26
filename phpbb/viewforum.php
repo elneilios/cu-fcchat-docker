@@ -47,27 +47,45 @@ if (!$forum_id)
 	trigger_error('NO_FORUM');
 }
 
-$sql_from = FORUMS_TABLE . ' f';
+$sql_ary = [
+	'SELECT'	=> 'f.*',
+	'FROM'		=> [
+		FORUMS_TABLE		=> 'f',
+	],
+	'WHERE'		=> 'f.forum_id = ' . $forum_id,
+];
+
 $lastread_select = '';
 
 // Grab appropriate forum data
 if ($config['load_db_lastread'] && $user->data['is_registered'])
 {
-	$sql_from .= ' LEFT JOIN ' . FORUMS_TRACK_TABLE . ' ft ON (ft.user_id = ' . $user->data['user_id'] . '
-		AND ft.forum_id = f.forum_id)';
-	$lastread_select .= ', ft.mark_time';
+	$sql_ary['LEFT_JOIN'][] = [
+		'FROM' => [FORUMS_TRACK_TABLE => 'ft'],
+		'ON' => 'ft.user_id = ' . $user->data['user_id'] . ' AND ft.forum_id = f.forum_id',
+	];
+	$sql_ary['SELECT'] .= ', ft.mark_time';
 }
 
 if ($user->data['is_registered'])
 {
-	$sql_from .= ' LEFT JOIN ' . FORUMS_WATCH_TABLE . ' fw ON (fw.forum_id = f.forum_id AND fw.user_id = ' . $user->data['user_id'] . ')';
-	$lastread_select .= ', fw.notify_status';
+	$sql_ary['LEFT_JOIN'][] = [
+		'FROM' => [FORUMS_WATCH_TABLE => 'fw'],
+		'ON' => 'fw.forum_id = f.forum_id AND fw.user_id = ' . $user->data['user_id'],
+	];
+	$sql_ary['SELECT'] .= ', fw.notify_status';
 }
 
-$sql = "SELECT f.* $lastread_select
-	FROM $sql_from
-	WHERE f.forum_id = $forum_id";
-$result = $db->sql_query($sql);
+/**
+ * You can use this event to modify the sql that selects the forum on the viewforum page.
+ *
+ * @event core.viewforum_modify_sql
+ * @var array	sql_ary		The SQL array to get the data for a forum
+ * @since 3.3.14-RC1
+ */
+$vars = ['sql_ary'];
+extract($phpbb_dispatcher->trigger_event('core.viewforum_modify_sql', compact($vars)));
+$result = $db->sql_query($db->sql_build_query('SELECT', $sql_ary));
 $forum_data = $db->sql_fetchrow($result);
 $db->sql_freeresult($result);
 
@@ -244,8 +262,8 @@ if (!$config['use_system_cron'])
 
 	if ($task->is_ready())
 	{
-		$url = $task->get_url();
-		$template->assign_var('RUN_CRON_TASK', '<img src="' . $url . '" width="1" height="1" alt="cron" />');
+		$cron_task_tag = $task->get_html_tag();
+		$template->assign_var('RUN_CRON_TASK', $cron_task_tag);
 	}
 	else
 	{
@@ -255,8 +273,8 @@ if (!$config['use_system_cron'])
 
 		if ($task->is_ready())
 		{
-			$url = $task->get_url();
-			$template->assign_var('RUN_CRON_TASK', '<img src="' . $url . '" width="1" height="1" alt="cron" />');
+			$cron_task_tag = $task->get_html_tag();
+			$template->assign_var('RUN_CRON_TASK', $cron_task_tag);
 		}
 	}
 }
@@ -433,6 +451,7 @@ $template->assign_vars(array(
 	'U_VIEW_FORUM'		=> append_sid("{$phpbb_root_path}viewforum.$phpEx", "f=$forum_id" . ((strlen($u_sort_param)) ? "&amp;$u_sort_param" : '') . (($start == 0) ? '' : "&amp;start=$start")),
 	'U_CANONICAL'		=> generate_board_url() . '/' . append_sid("viewforum.$phpEx", "f=$forum_id" . (($start) ? "&amp;start=$start" : ''), true, ''),
 	'U_MARK_TOPICS'		=> ($user->data['is_registered'] || $config['load_anon_lastread']) ? append_sid("{$phpbb_root_path}viewforum.$phpEx", 'hash=' . generate_link_hash('global') . "&amp;f=$forum_id&amp;mark=topics&amp;mark_time=" . time()) : '',
+	'U_SEARCH_FORUM'	=> append_sid("{$phpbb_root_path}search.$phpEx", 'fid%5B%5D=' . $forum_id),
 ));
 
 // Grab icons
@@ -918,6 +937,11 @@ if (count($topic_list))
 
 		// Replies
 		$replies = $phpbb_content_visibility->get_count('topic_posts', $row, $topic_forum_id) - 1;
+		// Correction for case of unapproved topic visible to poster
+		if ($replies < 0)
+		{
+			$replies = 0;
+		}
 
 		if ($row['topic_status'] == ITEM_MOVED)
 		{
@@ -934,7 +958,7 @@ if (count($topic_list))
 		topic_status($row, $replies, $unread_topic, $folder_img, $folder_alt, $topic_type);
 
 		// Generate all the URIs ...
-		$view_topic_url_params = 'f=' . $row['forum_id'] . '&amp;t=' . $topic_id;
+		$view_topic_url_params = 't=' . $topic_id;
 		$view_topic_url = $auth->acl_get('f_read', $forum_id) ? append_sid("{$phpbb_root_path}viewtopic.$phpEx", $view_topic_url_params) : false;
 
 		$topic_unapproved = (($row['topic_visibility'] == ITEM_UNAPPROVED || $row['topic_visibility'] == ITEM_REAPPROVE) && $auth->acl_get('m_approve', $row['forum_id']));
@@ -993,12 +1017,12 @@ if (count($topic_list))
 			'S_TOPIC_MOVED'			=> ($row['topic_status'] == ITEM_MOVED) ? true : false,
 
 			'U_NEWEST_POST'			=> $auth->acl_get('f_read', $forum_id) ? append_sid("{$phpbb_root_path}viewtopic.$phpEx", $view_topic_url_params . '&amp;view=unread') . '#unread' : false,
-			'U_LAST_POST'			=> $auth->acl_get('f_read', $forum_id)  ? append_sid("{$phpbb_root_path}viewtopic.$phpEx", $view_topic_url_params . '&amp;p=' . $row['topic_last_post_id']) . '#p' . $row['topic_last_post_id'] : false,
+			'U_LAST_POST'			=> $auth->acl_get('f_read', $forum_id)  ? append_sid("{$phpbb_root_path}viewtopic.$phpEx", 'p=' . $row['topic_last_post_id']) . '#p' . $row['topic_last_post_id'] : false,
 			'U_LAST_POST_AUTHOR'	=> get_username_string('profile', $row['topic_last_poster_id'], $row['topic_last_poster_name'], $row['topic_last_poster_colour']),
 			'U_TOPIC_AUTHOR'		=> get_username_string('profile', $row['topic_poster'], $row['topic_first_poster_name'], $row['topic_first_poster_colour']),
 			'U_VIEW_TOPIC'			=> $view_topic_url,
 			'U_VIEW_FORUM'			=> append_sid("{$phpbb_root_path}viewforum.$phpEx", 'f=' . $row['forum_id']),
-			'U_MCP_REPORT'			=> append_sid("{$phpbb_root_path}mcp.$phpEx", 'i=reports&amp;mode=reports&amp;f=' . $row['forum_id'] . '&amp;t=' . $topic_id, true, $user->session_id),
+			'U_MCP_REPORT'			=> append_sid("{$phpbb_root_path}mcp.$phpEx", 'i=reports&amp;mode=reports&amp;t=' . $topic_id, true, $user->session_id),
 			'U_MCP_QUEUE'			=> $u_mcp_queue,
 
 			'S_TOPIC_TYPE_SWITCH'	=> ($s_type_switch == $s_type_switch_test) ? -1 : $s_type_switch_test,
@@ -1021,7 +1045,7 @@ if (count($topic_list))
 
 		$template->assign_block_vars('topicrow', $topic_row);
 
-		$pagination->generate_template_pagination($view_topic_url, 'topicrow.pagination', 'start', $replies + 1, $config['posts_per_page'], 1, true, true);
+		$pagination->generate_template_pagination($topic_row['U_VIEW_TOPIC'], 'topicrow.pagination', 'start', (int) $topic_row['REPLIES'] + 1, $config['posts_per_page'], 1, true, true);
 
 		$s_type_switch = ($row['topic_type'] == POST_ANNOUNCE || $row['topic_type'] == POST_GLOBAL) ? 1 : 0;
 

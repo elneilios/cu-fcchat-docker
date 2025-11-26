@@ -12,11 +12,17 @@ namespace phpbb\mediaembed;
 
 class ext extends \phpbb\extension\base
 {
-	/** @var string Minimum requirements: phpBB 3.2.1 */
-	const PHPBB_MINIMUM = '3.2.1';
+	/**
+	 * @var string Minimum requirements:
+	 * phpBB 3.3.2 because using role_exists in migrations
+	 * phpBB 3.3.2 because TextFormatter 2.7.5 supports clyp.it and codepen.com
+	 */
+	public const PHPBB_MINIMUM = '3.3.2';
 
-	/** @var string YAML file extension */
-	const YML = '.yml';
+	/**
+	 * @var string YAML file extension
+	 */
+	public const YML = '.yml';
 
 	/**
 	 * @var array An array of installation error messages

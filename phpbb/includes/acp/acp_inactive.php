@@ -130,7 +130,7 @@ class acp_inactive
 								$messenger->anti_abuse_headers($config, $user);
 
 								$messenger->assign_vars(array(
-									'USERNAME'	=> htmlspecialchars_decode($row['username']))
+									'USERNAME'	=> html_entity_decode($row['username'], ENT_COMPAT))
 								);
 
 								$messenger->send(NOTIFY_EMAIL);
@@ -224,7 +224,7 @@ class acp_inactive
 							$messenger->anti_abuse_headers($config, $user);
 
 							$messenger->assign_vars(array(
-								'USERNAME'		=> htmlspecialchars_decode($row['username']),
+								'USERNAME'		=> html_entity_decode($row['username'], ENT_COMPAT),
 								'REGISTER_DATE'	=> $user->format_date($row['user_regdate'], false, true),
 								'U_ACTIVATE'	=> generate_board_url() . "/ucp.$phpEx?mode=activate&u=" . $row['user_id'] . '&k=' . $row['user_actkey'])
 							);
@@ -238,10 +238,11 @@ class acp_inactive
 
 						$messenger->save_queue();
 
-						// Add the remind state to the database
+						// Add the remind state to the database and increase activation expiration by one day
 						$sql = 'UPDATE ' . USERS_TABLE . '
 							SET user_reminded = user_reminded + 1,
-								user_reminded_time = ' . time() . '
+								user_reminded_time = ' . time() . ',
+								user_actkey_expiration = ' . (int) $user::get_token_expiration() . '
 							WHERE ' . $db->sql_in_set('user_id', $user_ids);
 						$db->sql_query($sql);
 

@@ -62,7 +62,7 @@ class upload extends \phpbb\avatar\driver\driver
 	*/
 	public function get_data($row)
 	{
-		$root_path = (defined('PHPBB_USE_BOARD_URL_PATH') && PHPBB_USE_BOARD_URL_PATH) ? generate_board_url() . '/' : $this->path_helper->get_web_root_path();
+		$root_path = $this->path_helper->get_web_root_path();
 
 		return array(
 			'src' => $root_path . 'download/file.' . $this->php_ext . '?avatar=' . $row['avatar'],
@@ -84,6 +84,7 @@ class upload extends \phpbb\avatar\driver\driver
 		$template->assign_vars(array(
 			'S_UPLOAD_AVATAR_URL' => ($this->config['allow_avatar_remote_upload']) ? true : false,
 			'AVATAR_UPLOAD_SIZE' => $this->config['avatar_filesize'],
+			'AVATAR_ALLOWED_EXTENSIONS' => implode(',', preg_replace('/^/', '.', $this->allowed_extensions)),
 		));
 
 		return true;

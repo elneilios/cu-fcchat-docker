@@ -151,12 +151,11 @@ class mssql_odbc extends \phpbb\db\driver\mssql_base
 		{
 			global $cache;
 
-			// EXPLAIN only in extra debug mode
-			if (defined('DEBUG'))
+			if ($this->debug_sql_explain)
 			{
 				$this->sql_report('start', $query);
 			}
-			else if (defined('PHPBB_DISPLAY_LOAD_TIME'))
+			else if ($this->debug_load_time)
 			{
 				$this->curtime = microtime(true);
 			}
@@ -167,16 +166,25 @@ class mssql_odbc extends \phpbb\db\driver\mssql_base
 
 			if ($this->query_result === false)
 			{
-				if (($this->query_result = @odbc_exec($this->db_connect_id, $query)) === false)
+				try
+				{
+					$this->query_result = @odbc_exec($this->db_connect_id, $query);
+				}
+				catch (\Error $e)
+				{
+					// Do nothing as SQL driver will report the error
+				}
+
+				if ($this->query_result === false)
 				{
 					$this->sql_error($query);
 				}
 
-				if (defined('DEBUG'))
+				if ($this->debug_sql_explain)
 				{
 					$this->sql_report('stop', $query);
 				}
-				else if (defined('PHPBB_DISPLAY_LOAD_TIME'))
+				else if ($this->debug_load_time)
 				{
 					$this->sql_time += microtime(true) - $this->curtime;
 				}
@@ -186,17 +194,19 @@ class mssql_odbc extends \phpbb\db\driver\mssql_base
 					return false;
 				}
 
+				$safe_query_id = $this->clean_query_id($this->query_result);
+
 				if ($cache && $cache_ttl)
 				{
-					$this->open_queries[(int) $this->query_result] = $this->query_result;
+					$this->open_queries[$safe_query_id] = $this->query_result;
 					$this->query_result = $cache->sql_save($this, $query, $this->query_result, $cache_ttl);
 				}
 				else if (strpos($query, 'SELECT') === 0)
 				{
-					$this->open_queries[(int) $this->query_result] = $this->query_result;
+					$this->open_queries[$safe_query_id] = $this->query_result;
 				}
 			}
-			else if (defined('DEBUG'))
+			else if ($this->debug_sql_explain)
 			{
 				$this->sql_report('fromcache', $query);
 			}
@@ -261,18 +271,19 @@ class mssql_odbc extends \phpbb\db\driver\mssql_base
 			$query_id = $this->query_result;
 		}
 
-		if ($cache && $cache->sql_exists($query_id))
+		$safe_query_id = $this->clean_query_id($query_id);
+		if ($cache && $cache->sql_exists($safe_query_id))
 		{
-			return $cache->sql_fetchrow($query_id);
+			return $cache->sql_fetchrow($safe_query_id);
 		}
 
 		return ($query_id) ? odbc_fetch_array($query_id) : false;
 	}
 
 	/**
-	* {@inheritDoc}
-	*/
-	function sql_nextid()
+	 * {@inheritdoc}
+	 */
+	public function sql_last_inserted_id()
 	{
 		$result_id = @odbc_exec($this->db_connect_id, 'SELECT @@IDENTITY');
 
@@ -302,14 +313,15 @@ class mssql_odbc extends \phpbb\db\driver\mssql_base
 			$query_id = $this->query_result;
 		}
 
-		if ($cache && !is_object($query_id) && $cache->sql_exists($query_id))
+		$safe_query_id = $this->clean_query_id($query_id);
+		if ($cache && $cache->sql_exists($safe_query_id))
 		{
-			return $cache->sql_freeresult($query_id);
+			return $cache->sql_freeresult($safe_query_id);
 		}
 
-		if (isset($this->open_queries[(int) $query_id]))
+		if (isset($this->open_queries[$safe_query_id]))
 		{
-			unset($this->open_queries[(int) $query_id]);
+			unset($this->open_queries[$safe_query_id]);
 			return odbc_free_result($query_id);
 		}
 
