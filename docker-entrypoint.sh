@@ -9,7 +9,7 @@ PHPBB_DIR="/var/www/html"
 if [ -f "/tmp/docker.config.php" ]; then
     echo "Copying Docker-specific config.php..."
     cp /tmp/docker.config.php "$PHPBB_DIR/config.php"
-    chown apache:apache "$PHPBB_DIR/config.php"
+    chown www-data:www-data "$PHPBB_DIR/config.php"
     chmod 644 "$PHPBB_DIR/config.php"
 fi
 
@@ -19,7 +19,7 @@ fi
 for dir in cache files store images/avatars/upload; do
     if [ -d "$PHPBB_DIR/$dir" ]; then
         echo "Setting permissions for $dir..."
-        chown -R apache:apache "$PHPBB_DIR/$dir"
+        chown -R www-data:www-data "$PHPBB_DIR/$dir"
         chmod -R 777 "$PHPBB_DIR/$dir"
     fi
 done
@@ -46,7 +46,7 @@ fi
 # ---------------------------
 for dir in cache files store images/avatars/upload; do
     if [ -d "$PHPBB_DIR/$dir" ]; then
-        chown -R apache:apache "$PHPBB_DIR/$dir"
+        chown -R www-data:www-data "$PHPBB_DIR/$dir"
         chmod -R 777 "$PHPBB_DIR/$dir"
     fi
 done
@@ -61,12 +61,13 @@ export SERVER_PORT=${APACHE_SERVER_PORT:-80}
 # 6. Configure PHP for phpBB sessions, logging, and timezone
 # ---------------------------
 # Ensure error log exists
-touch /var/log/php_errors.log
-chown apache:apache /var/log/php_errors.log
-chmod 664 /var/log/php_errors.log
 
-cat <<EOL > /etc/php.d/phpbb.ini
+cat <<EOL > /usr/local/etc/php/conf.d/phpbb.ini
 ; phpBB session settings
+
+; Error reporting
+
+; Set default timezone
 session.save_handler = files
 session.save_path = /var/www/html/store
 
@@ -75,7 +76,6 @@ error_reporting = E_ALL & ~E_STRICT & ~E_DEPRECATED & ~E_NOTICE
 display_errors = Off
 log_errors = On
 error_log = /var/log/php_errors.log
-
 ; Set default timezone
 date.timezone = Europe/London
 EOL
@@ -90,12 +90,7 @@ echo "Starting SSH daemon..."
 # 8. Set ServerName for Apache and start (only if not already running)
 # ---------------------------
 echo "Setting Apache ServerName..."
-echo "ServerName localhost" > /etc/httpd/conf.d/servername.conf
+echo "ServerName localhost" > /etc/apache2/conf-available/servername.conf
+a2enconf servername
 echo "Starting Apache..."
-if ! pgrep -x httpd > /dev/null; then
-    exec "$@"
-else
-    echo "Apache is already running. Skipping start."
-    # Keep container alive if Apache is already running
-    tail -f /dev/null
-fi
+exec "$@"
