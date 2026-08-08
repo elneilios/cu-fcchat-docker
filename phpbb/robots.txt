@@ -1,3 +1,45 @@
+# cu-fcchat.com robots.txt
+
+# ByteDance / TikTok
+User-agent: Bytespider
+Disallow: /
+
+# Majestic SEO
+User-agent: MJ12bot
+Disallow: /
+
+# Serpstat
+User-agent: serpstatbot
+Disallow: /
+
+# Sogou
+User-agent: Sogou web spider
+Disallow: /
+
+# Semrush
+User-agent: SemrushBot
+Disallow: /
+
+# Amazon
+User-agent: Amazonbot
+Disallow: /
+
+# Huawei Petal Search
+User-agent: PetalBot
+Disallow: /
+
+# Anthropic
+User-agent: ClaudeBot
+Disallow: /
+
+# Baidu
+User-agent: Baiduspider
+Disallow: /
+
+# Common Crawl
+User-agent: CCBot
+Disallow: /
+
+# Allow all other crawlers
 User-agent: *
 Disallow:
-

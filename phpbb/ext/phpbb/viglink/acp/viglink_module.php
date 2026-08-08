@@ -26,6 +26,11 @@ class viglink_module
 	/** @var string $u_action Custom form action */
 	public $u_action;
 
+	/**
+	 * Main ACP module
+	 *
+	 * @throws \Exception
+	 */
 	public function main($id, $mode)
 	{
 		global $phpbb_container;
@@ -45,7 +50,7 @@ class viglink_module
 		$language->add_lang('viglink_module_acp', 'phpbb/viglink');
 
 		$this->tpl_name = 'acp_viglink';
-		$this->page_title = $language->lang('ACP_VIGLINK_SETTINGS');
+		$this->page_title = 'ACP_VIGLINK_SETTINGS';
 
 		$submit = $request->is_set_post('submit');
 
@@ -126,7 +131,7 @@ class viglink_module
 
 		$template->assign_vars(array(
 			'S_ERROR'				=> (bool) count($error),
-			'ERROR_MSG'				=> implode('<br />', $error),
+			'ERROR_MSG'				=> implode('<br>', $error),
 
 			'VIGLINK_ENABLED'		=> $cfg_array['viglink_enabled'],
 
