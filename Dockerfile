@@ -7,26 +7,27 @@ RUN sed -i 's|http://deb.debian.org/debian|http://archive.debian.org/debian|g' /
     && apt-get install -y \
     libmariadb-dev-compat \
     libmariadb-dev \
-        libpng-dev \
-        libjpeg-dev \
-        libxml2-dev \
-        libzip-dev \
-        libbz2-dev \
-        libfreetype6-dev \
-        libxpm-dev \
-        libwebp-dev \
-        libonig-dev \
-        libmcrypt-dev \
-        libldap2-dev \
-        libtidy-dev \
-        libssl-dev \
-        libcurl4-openssl-dev \
-        libxslt1-dev \
-        libsqlite3-dev \
-        libgmp-dev \
-        libicu-dev \
-        unzip \
-        openssh-server \
+    mariadb-client \
+    libpng-dev \
+    libjpeg-dev \
+    libxml2-dev \
+    libzip-dev \
+    libbz2-dev \
+    libfreetype6-dev \
+    libxpm-dev \
+    libwebp-dev \
+    libonig-dev \
+    libmcrypt-dev \
+    libldap2-dev \
+    libtidy-dev \
+    libssl-dev \
+    libcurl4-openssl-dev \
+    libxslt1-dev \
+    libsqlite3-dev \
+    libgmp-dev \
+    libicu-dev \
+    unzip \
+    openssh-server \
     && docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/ --with-xpm-dir=/usr/include/ --with-webp-dir=/usr/include/
 
 RUN docker-php-ext-install bcmath
