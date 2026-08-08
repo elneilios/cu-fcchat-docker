@@ -1,5 +1,7 @@
-# Track db_init SQL files and phpbb code for colleague deployment
-# SQL files tracked via Git LFS (see .gitattributes)
+# phpBB code is tracked for colleague deployment
+
+# Production database dump is local-only and may contain sensitive data
+/db_init/001_phpbb_backup.sql
 
 # Ignore backups - these are local snapshots, not needed in source control
 /backups/
