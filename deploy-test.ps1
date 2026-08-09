@@ -6,6 +6,7 @@ param(
     [switch] $SkipPreflightChecks,
     [switch] $NoHostKeyCheck,
     [string] $KeyPath,
+    [switch] $AllowEnabledBoard,
     [switch] $InjectKey
 )
 
@@ -42,6 +43,6 @@ if (-not (Test-Path $deployScript)) {
 
 # Pass through to deploy.ps1 using local container SSH settings (prefer key auth if available)
 # PhpbbPath omitted to use deploy.ps1 default (/var/www/html)
-& $deployScript -SnapshotFolder $SnapshotFolder -ServerUser root -ServerHost localhost -ServerPort 2222 -AutoConfirm:$AutoConfirm -DryRun:$DryRun -SkipDatabase:$SkipDatabase -SkipPreflightChecks:$SkipPreflightChecks -NoHostKeyCheck:$NoHostKeyCheck -KeyPath $KeyPath
+& $deployScript -SnapshotFolder $SnapshotFolder -ServerUser root -ServerHost localhost -ServerPort 2222 -AutoConfirm:$AutoConfirm -DryRun:$DryRun -SkipDatabase:$SkipDatabase -SkipPreflightChecks:$SkipPreflightChecks -NoHostKeyCheck:$NoHostKeyCheck -KeyPath $KeyPath -AllowEnabledBoard:$AllowEnabledBoard
 
 Write-Host "=== Test deployment finished ===" -ForegroundColor Green
