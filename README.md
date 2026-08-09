@@ -255,7 +255,7 @@ For a real production deployment:
 
 The deployment engine:
 
-- stages and SHA-256 verifies uploaded artifacts;
+- stages uploaded artifacts and verifies SHA-256 hashes when supported by the target;
 - backs up the live DB/files before modification;
 - preserves the live `config.php`;
 - preserves target-specific server/cookie/maintenance configuration;
