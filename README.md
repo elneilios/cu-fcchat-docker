@@ -1,240 +1,329 @@
 # cu-fcchat-docker
 
-Lightweight Docker environment to run and upgrade a legacy phpBB forum (PHP 5.6 + Apache) for local testing.
+A local Docker replica and maintenance toolkit for **cu-fcchat.com**, built around a legacy phpBB stack.
 
-## Prerequisites
+The repo is designed for a cautious workflow:
 
-- Fork/clone this repository to your local machine. If you're using GitHub, fork the repo then clone your fork (or clone this repo directly):
+> **pull / snapshot → test locally → dry-run → change → verify → keep rollback**
 
-```bash
-# example (replace with your fork URL or the repo URL)
-git clone git@github.com:<your-username>/cu-fcchat-docker.git
-cd cu-fcchat-docker
+It is not a production container image. Docker is the safe test environment; production changes are performed over SSH by the PowerShell maintenance scripts.
+
+## 🚀 Quick start
+
+### Prerequisites
+
+- Git
+- Docker Desktop / Docker Compose
+- PowerShell
+- OpenSSH client (`ssh` / `scp`)
+- SSH key access to the production server for remote workflows — setup is covered below
+
+Clone the repo and start from its root:
+
+```powershell
+git clone https://github.com/elneilios/cu-fcchat-docker.git
+Set-Location .\cu-fcchat-docker
 ```
 
-- Install Docker Desktop (Windows/macOS) or Docker Engine + Docker Compose (Linux): https://www.docker.com/products/docker-desktop
-- Verify:
+### Set up production SSH access
 
-```pwsh
-docker --version
-docker compose version   # or: docker-compose --version
+The production maintenance scripts connect over SSH using a key rather than a password.
+
+If you already have a working production SSH key, you can use it directly with `-KeyPath`.
+
+A typical dedicated key location is:
+
+```powershell
+$HOME\.ssh\cu-fcchat-prod
 ```
 
-## Quick Start
+To create a new Ed25519 key:
 
-You can set up the environment in three ways:
-
-**Option A: Pull from live server**
-1. Use the pull script to download the latest code and database from your live server:
-
-```pwsh
-.\pull-live.ps1 -ServerHost myserver.com -KeyPath ~/.ssh/id_rsa
+```powershell
+ssh-keygen -t ed25519 -f $HOME\.ssh\cu-fcchat-prod -C "cu-fcchat production"
 ```
 
-This automatically downloads the phpBB files to `phpbb/` and exports the database to `db_init/001_phpbb_backup.sql`.
+The generated **public** key (`cu-fcchat-prod.pub`) must then be added to the production server's authorised SSH keys. Never commit the private key to this repository.
 
-**Option B: Copy live server data manually**
-1. Copy the live server's phpBB site files into this repo's `phpbb/` folder (FTP/SFTP; copy `/var/www/html`).
-2. Export a SQL backup from the live server (phpMyAdmin or export tool) and place the `.sql` file at `db_init/001_phpbb_backup.sql`.
-  A placeholder example `db_init/001_phpbb_backup.sql.example` is included — replace it with your real dump (SQL files are tracked via Git LFS).
+Test the connection before using the maintenance scripts:
 
-**Option C: Restore from an existing backup in the repo**
-1. List available backups in the `backups/` directory (e.g., `20251106_0102_3.2.11`).
-2. Run the restore script:
-
-```pwsh
-# Interactive selection:
-.\restore.ps1
-
-# Or non-interactive by folder name (e.g. 20251106_0102_3.2.11):
-.\restore.ps1 -SnapshotFolder 20251106_0102_3.2.11
+```powershell
+ssh -i $HOME\.ssh\cu-fcchat-prod root@cu-fcchat.com
 ```
 
-This will restore both the phpBB files and database from the selected backup.
+For more detail, including Docker test-key usage and key rotation, see
+[`docs/SSH-KEY-USAGE.md`](docs/SSH-KEY-USAGE.md).
+### Create a fresh local copy from production
 
-**Then build and run:**
+First stop the local stack if it is running:
 
-3. Build and run the stack from the repo root:
-
-```pwsh
-Set-Location 'C:\cu-fcchat-docker'
-docker compose up --build
-# or detached: docker compose up -d --build
+```powershell
+docker compose down
 ```
 
-Note: MariaDB runs SQL files in `db_init/` only on first-volume initialization. If the DB volume exists, import the SQL into the running DB container instead.
+Dry-run the production pull:
 
-## Backup and Restore
-
-Use the included snapshot/restore scripts before upgrades.
-
-Create a snapshot (example):
-
-```pwsh
-docker compose up -d   # ensure DB is up
-.\snapshot.ps1
-
-# Or with a descriptive label:
-.\snapshot.ps1 "3.2.11_clean"
-# Creates: backups/20251107_1430_3.2.11_clean/
+```powershell
+.\pull-live.ps1 `
+  -ServerHost cu-fcchat.com `
+  -KeyPath $HOME\.ssh\cu-fcchat-prod `
+  -DryRun
 ```
 
-Restore a snapshot (example):
+Then perform the real pull:
 
-```pwsh
-# Interactive selection:
-.\restore.ps1
-
-# Or non-interactive by folder name (e.g. 20251106_0102_3.2.11):
-.\restore.ps1 -SnapshotFolder 20251106_0102_3.2.11
+```powershell
+.\pull-live.ps1 `
+  -ServerHost cu-fcchat.com `
+  -KeyPath $HOME\.ssh\cu-fcchat-prod
 ```
 
-Backups are saved under `backups/` and are tracked in the repository via Git LFS for colleague access. Test restores in a disposable environment.
+Type `PULL` when prompted.
 
-## Upgrade phpBB guidance
+A real pull stages and validates both the database and phpBB filesystem before replacing the local copies. Remote temporary files are cleaned up afterwards.
 
-This workflow allows you to safely upgrade a live phpBB installation by testing upgrades locally in Docker, then deploying the upgraded snapshot back to production.
+Build a completely fresh local environment from the pulled data:
 
-### Full upgrade process
+```powershell
+docker compose down -v
+docker compose up --build -d
+```
 
-1. **Put board into maintenance mode** on the live server (ACP → General → Board settings)
+Open:
 
-2. **Pull live server code and database** to local environment
-   - Use the pull script for automated download:
-     ```pwsh
-     .\pull-live.ps1 -ServerHost your-server.com -KeyPath ~/.ssh/id_rsa
-     ```
-   - Or manually via FTP/SFTP to `phpbb/` and database export to `db_init/001_phpbb_backup.sql`
+**http://localhost:8080**
 
-3. **Build and deploy the Docker container**
-   ```pwsh
-   docker compose up --build -d
-   ```
-   - Access at http://localhost:8080 to verify the local copy matches live
+## 🧭 Which script should I use?
 
-4. **Remove custom styles** from code and database
-   - Delete custom theme folders from `phpbb/styles/`
-   - In the database, remove custom style records (or via ACP if functional)
-   - This prevents upgrade conflicts with outdated themes
+| Goal | Script | Changes production? |
+|---|---|---:|
+| Pull the current live forum into Docker | `pull-live.ps1` | No |
+| Save the current local Docker state | `snapshot.ps1` | No |
+| Restore a local snapshot | `restore.ps1` | No |
+| Test/deploy a snapshot to the Docker target | `deploy-test.ps1` | No |
+| Deploy a known snapshot to a remote server | `deploy.ps1` | **Yes** |
+| Upgrade phpBB 3.3.x | `upgrade.ps1` | Docker or **Yes**, depending on target |
+| Copy maintained custom styles into `phpbb/styles/` | `sync-custom-styles.ps1` | No |
+| Create a Git milestone tag | `tag-milestone.ps1` | Git only |
 
-5. **Take a snapshot** of the clean baseline
-   ```pwsh
-   .\snapshot.ps1 "live__no_custom_styles"
-   ```
+For production work, see [`docs/ADMIN-RUNBOOK.md`](docs/ADMIN-RUNBOOK.md).
 
-6. **Download phpBB full version zip** into `updates/` folder
-   - Get the next version from https://www.phpbb.com/downloads/
-   - Example: `phpBB-3.0.14.zip`, `phpBB-3.1.12.zip`, etc.
+## 🐳 Local stack
 
-7. **Use upgrade.ps1 to apply the version upgrade**
-   ```pwsh
-   .\upgrade.ps1
-   ```
-   - Select the downloaded zip from `updates/`
-   - Script extracts, applies upgrade, runs database migrations
-   - Test the upgraded forum thoroughly
+The local environment mirrors the important parts of the production stack:
 
-8. **Once tested and happy, create a new snapshot**
-   ```pwsh
-   .\snapshot.ps1 "3.0.14"
-   ```
+- PHP 7.2 + Apache
+- MySQL 5.6
+- phpBB source bind-mounted at `/var/www/html`
+- persistent named volumes for uploads, cache/store runtime data, and MySQL
+- production-compatible `latin1` / `latin1_swedish_ci` server defaults
 
-9. **Repeat steps 6-8 until up-to-date**
-    - Upgrade incrementally through each major/minor version
-    - Example path: 3.0.12 → 3.0.14 → 3.1.12 → 3.2.11 → 3.3.x
-    - Always snapshot after each successful upgrade
+Local ports are deliberately loopback-only:
 
-10. **Create new theme** (optional)
-    - Install/customize a modern phpBB theme compatible with the final version
-    - Test thoroughly and take another snapshot
+| Service | Address |
+|---|---|
+| phpBB | `http://127.0.0.1:8080` |
+| SSH test target | `127.0.0.1:2222` |
+| MySQL | not published to the host |
 
-11. **Use deploy.ps1 to deploy the last snapshot to production**
-    ```pwsh
-    .\deploy.ps1 -ServerHost your-server.com -KeyPath ~/.ssh/id_rsa
-    ```
-    - Script creates backups on the live server
-    - Uploads and imports the upgraded database
-    - Replaces live files with the upgraded snapshot
-    - Supports dry-run mode (`-DryRun`) to preview changes
-    - Turn off maintenance mode and verify live site
+The Docker SSH service is for deployment testing. It uses key authentication; password authentication is disabled.
 
-### Rollback strategy
+## 📸 Snapshots and restore
 
-If anything goes wrong during local testing:
-- Use `.\restore.ps1` to revert to a previous snapshot
+Create a snapshot while the local stack is running:
 
-If deployment to production fails:
-- The deploy script creates automatic backups in `/root/phpbb_backup_YYYYMMDD_HHMM/` on the live server
-- Rollback instructions are displayed in the deploy output
+```powershell
+.\snapshot.ps1 'before_change'
+```
 
-### Important notes
+A snapshot contains:
 
-- **Always upgrade incrementally** — jumping multiple major versions can cause database corruption
-- **Test each upgrade thoroughly** before proceeding to the next version
-- **Keep all snapshots** until the final production deployment is verified
-- **Backup your backups** — snapshots are in Git LFS but also keep local copies
-- **PHP version compatibility** — this Docker image uses PHP 5.6; upgrade PHP separately if targeting phpBB 3.3+
+```text
+backups/<timestamp>_<label>/
+├── phpbb_db.sql
+└── phpbb_files/
+```
 
-## Docker container details
+`snapshot.ps1` reads the effective Docker phpBB DB configuration, uses a temporary MySQL option file rather than exposing the password in the command line, and handles `mysqldump` clients with or without `--no-tablespaces`.
 
-- Web: `php` image `php:5.6-apache` (Dockerfile adjusts apt to use Debian archive mirrors to allow old packages).
-- DB: `mariadb:10.5` (initialized from `db_init/` on first run).
-- PHP extensions installed: gd, mysqli, mbstring, intl, zip, xml (see `Dockerfile`).
-- Entrypoint (`docker-entrypoint.sh`) fixes permissions, clears cache/sessions and writes a small php ini for sessions/error logging.
-- Volumes (persistent):
-  - uploads: `phpbb_data_uploads` → `/var/www/html/files`
-  - cache: `phpbb_data_cache` → `/var/www/html/cache`
-  - sessions: `phpbb_data_sessions` → `/var/www/html/store`
-  - db: `phpbb_db_data` → `/var/lib/mysql`
-- Local override: `config/docker.config.php` is copied into `phpbb/config.php` by the entrypoint to point phpBB to the DB service (`db`, user `phpbbuser`, password `phpbbpass`) — dev only.
+Preview a restore:
 
-Security: this environment is for local testing. The Dockerfile relaxes apt/security checks to install legacy packages — do not use this image in production or expose it to untrusted networks.
+```powershell
+.\restore.ps1 -SnapshotFolder '<snapshot-folder>' -DryRun
+```
 
-## Custom Styles
+Restore:
 
-Custom phpBB styles are maintained in the `custom-styles/` directory, separate from the volatile `phpbb/` folder. This ensures they are never lost during backups, restores, or upgrades.
+```powershell
+.\restore.ps1 -SnapshotFolder '<snapshot-folder>'
+```
 
-**Current styles:**
-- `cu-fcchat` - Custom Colchester United theme with Exo 2 and Orbitron fonts
+Type `RESTORE` when prompted.
 
-**Syncing custom styles:**
-```pwsh
-# Sync all custom styles to phpbb/styles/
+A real restore deliberately rebuilds the local Docker state from the snapshot, including a fresh MySQL volume. Snapshot file/store data is restored where applicable, while cache and active login/session state are treated as disposable runtime data.
+
+> Snapshots under `backups/` are local recovery artifacts and are ignored by Git.
+
+## ⬇️ Pulling production to local
+
+`pull-live.ps1` is the normal way to refresh the Docker replica.
+
+Safety features include:
+
+- `-DryRun`
+- SSH `BatchMode`
+- remote DB credentials read by PHP from the live `config.php`
+- temporary mode-600 MySQL option file
+- portable `mysqldump` handling
+- complete staging before local replacement
+- validation of downloaded DB/files
+- cleanup of remote `/tmp` artifacts
+- refusal to replace the local bind-mounted phpBB tree while the local `phpbb` container is running
+
+The real operation requires the explicit `PULL` confirmation.
+
+## ⬆️ phpBB 3.3.x upgrades
+
+The current upgrade engine is intentionally restricted to the **phpBB 3.3.x** branch.
+
+Put the official full phpBB ZIP in `updates/`, for example:
+
+```text
+updates/phpBB-3.3.17.zip
+```
+
+### Docker example
+
+```powershell
+.\upgrade.ps1 `
+  -Target Docker `
+  -Package .\updates\phpBB-3.3.17.zip `
+  -ExpectedSourceVersion 3.3.15
+```
+
+### Production dry-run
+
+Put the board into maintenance mode first, then:
+
+```powershell
+.\upgrade.ps1 `
+  -Target Remote `
+  -Package .\updates\phpBB-3.3.17.zip `
+  -ExpectedSourceVersion 3.3.15 `
+  -ServerHost cu-fcchat.com `
+  -KeyPath $HOME\.ssh\cu-fcchat-prod `
+  -DryRun
+```
+
+Run without `-DryRun` only after the dry-run and local testing pass.
+
+The remote engine creates a rollback backup under:
+
+```text
+/root/phpbb_upgrade_backup_<timestamp>
+```
+
+It also supports explicit rollback validation and execution with `-Rollback`.
+
+### What about phpBB 4.x?
+
+Do **not** simply loosen the package-version check.
+
+A future major-version migration must first be reviewed against phpBB's official migration requirements, including PHP/database compatibility, extensions, and the custom style. Only then should `upgrade.ps1` be deliberately extended and tested against a production snapshot in Docker.
+
+## 🚚 Snapshot deployment
+
+`deploy.ps1` deploys a known snapshot to a remote phpBB target.
+
+Always dry-run production first:
+
+```powershell
+.\deploy.ps1 `
+  -ServerHost cu-fcchat.com `
+  -KeyPath $HOME\.ssh\cu-fcchat-prod `
+  -SnapshotFolder '<snapshot-folder>' `
+  -DryRun
+```
+
+For a real production deployment:
+
+1. put the board into maintenance mode;
+2. run the dry-run;
+3. run the real command;
+4. type `DEPLOY`;
+5. smoke-test the site and ACP before re-enabling the board.
+
+The deployment engine:
+
+- stages and SHA-256 verifies uploaded artifacts;
+- backs up the live DB/files before modification;
+- preserves the live `config.php`;
+- preserves target-specific server/cookie/maintenance configuration;
+- preserves target ownership/modes for writable phpBB directories;
+- clears imported snapshot sessions;
+- automatically rolls back on failure unless explicitly disabled;
+- retains the rollback backup under `/root/phpbb_deploy_backup_<timestamp>`.
+
+Use `deploy-test.ps1` to exercise the same path against the Docker SSH target before trusting a deployment change.
+
+## 🎨 Custom styles
+
+The maintained project style lives outside the volatile runtime copy:
+
+```text
+custom-styles/cu-fcchat/
+```
+
+Sync it into the local phpBB tree with:
+
+```powershell
 .\sync-custom-styles.ps1
-
-# Sync specific style
-.\sync-custom-styles.ps1 -StyleName "cu-fcchat"
 ```
 
-The `restore.ps1` script automatically syncs custom styles after restoring a backup.
+This keeps the maintained style separate from phpBB files pulled from production or replaced by upgrade/restore operations.
 
-See `custom-styles/README.md` for detailed documentation.
+## 📁 Repository layout
 
-## Version Control and Milestones
-
-**Git Tagging:**
-Use semantic versioning to mark significant milestones:
-
-```pwsh
-# Create a milestone tag
-.\tag-milestone.ps1 -Version "1.0.0" -Message "Initial production release"
-
-# Create and push to remote
-.\tag-milestone.ps1 -Version "1.1.0" -Message "Added modern fonts" -Push
+```text
+.
+├── Dockerfile
+├── docker-compose.yml
+├── docker-entrypoint.sh
+├── config/
+│   └── docker.config.php
+├── custom-styles/
+├── db_init/
+├── phpbb/
+├── updates/
+├── pull-live.ps1
+├── snapshot.ps1
+├── restore.ps1
+├── deploy.ps1
+├── deploy-test.ps1
+├── upgrade.ps1
+├── sync-custom-styles.ps1
+└── docs/
 ```
 
-**Recommended tagging strategy:**
-- `1.0.0` - Initial production deployment
-- `1.x.0` - Minor updates (style changes, configuration tweaks)
-- `2.0.0` - Major phpBB version upgrades
-- `x.x.1` - Hotfixes and patches
+Runtime/sensitive data such as `phpbb/config.php`, the production DB init dump, snapshots, SSH keys, and logs are excluded from Git.
 
-**View tags:**
-```pwsh
-git tag -l                    # List all tags
-git show v1.0.0              # Show tag details
-```
+Text files use LF line endings through `.gitattributes`, including on Windows checkouts.
 
----
+## 🔐 Safety notes
 
-For more detail see `Dockerfile`, `docker-entrypoint.sh`, `docker-compose.yml` and the scripts in the repo.
+- Never commit production credentials or private SSH keys.
+- Treat a credential that has ever appeared in Git history as exposed and rotate it; removing the current file is not enough.
+- Do not use `-NoHostKeyCheck` against production.
+- Do not use `-AllowEnabledBoard` to bypass maintenance mode on production.
+- Do not use `-NoRollback` for routine production deployments.
+- Keep production rollback backups until the change has been verified.
+- Major phpBB upgrades require a fresh compatibility review.
+
+See [`docs/SECURITY.md`](docs/SECURITY.md) and [`docs/SSH-KEY-USAGE.md`](docs/SSH-KEY-USAGE.md).
+
+## 📚 Documentation
+
+- [`docs/ADMIN-RUNBOOK.md`](docs/ADMIN-RUNBOOK.md) — production/local operating procedures
+- [`docs/WORKFLOW.md`](docs/WORKFLOW.md) — decision guide and workflow diagrams
+- [`docs/SSH-KEY-USAGE.md`](docs/SSH-KEY-USAGE.md) — production and Docker SSH usage
+- [`docs/SECURITY.md`](docs/SECURITY.md) — repository security and secret-handling notes
