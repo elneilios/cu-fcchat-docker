@@ -62,9 +62,9 @@ COPY ./config/php.ini /usr/local/etc/php/php.ini
 
 # Configure SSH
 RUN mkdir -p /var/run/sshd \
-    && echo 'root:testpassword' | chpasswd \
-    && sed -i 's/#PermitRootLogin yes/PermitRootLogin yes/' /etc/ssh/sshd_config \
-    && sed -i 's/UsePAM yes/UsePAM no/' /etc/ssh/sshd_config
+    && sed -ri 's/^#?PermitRootLogin .*/PermitRootLogin prohibit-password/' /etc/ssh/sshd_config \
+    && sed -ri 's/^#?PasswordAuthentication .*/PasswordAuthentication no/' /etc/ssh/sshd_config \
+    && sed -ri 's/^UsePAM .*/UsePAM no/' /etc/ssh/sshd_config
 
 # Copy phpBB forum files to Apache document root
 COPY ./phpbb /var/www/html/

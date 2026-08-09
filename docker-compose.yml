@@ -3,8 +3,8 @@ services:
     build: .
     container_name: phpbb
     ports:
-      - "8080:80"
-      - "2222:22"
+      - "127.0.0.1:8080:80"
+      - "127.0.0.1:2222:22"
     volumes:
       - ./phpbb:/var/www/html                      # phpBB source
       - ./config/docker.config.php:/tmp/docker.config.php:ro  # Docker config source (temporary location)
@@ -27,7 +27,6 @@ services:
       MYSQL_PASSWORD: phpbbpass
     volumes:
       - ./db_init:/docker-entrypoint-initdb.d
-      - ./mysql.cnf:/etc/mysql/conf.d/custom.cnf:ro
       - phpbb_db_data:/var/lib/mysql
     command: --character-set-server=latin1 --collation-server=latin1_swedish_ci
 
