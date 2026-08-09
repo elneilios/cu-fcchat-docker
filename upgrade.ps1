@@ -44,25 +44,25 @@
       emergency where the current database is too damaged to verify board_disable.
 
 .EXAMPLE
-    .\upgrade-unified.ps1 -Target Docker -Package .\updates\phpBB-3.3.17.zip -ExpectedSourceVersion 3.3.15
+    .\upgrade.ps1 -Target Docker -Package .\updates\phpBB-3.3.17.zip -ExpectedSourceVersion 3.3.15
 
 .EXAMPLE
-    .\upgrade-unified.ps1 -Target Remote -Package .\updates\phpBB-3.3.17.zip `
+    .\upgrade.ps1 -Target Remote -Package .\updates\phpBB-3.3.17.zip `
       -ExpectedSourceVersion 3.3.15 -ServerHost cu-fcchat.com `
       -KeyPath $HOME\.ssh\cu-fcchat-prod -DryRun
 
 .EXAMPLE
-    .\upgrade-unified.ps1 -Target Remote -Package .\updates\phpBB-3.3.17.zip `
+    .\upgrade.ps1 -Target Remote -Package .\updates\phpBB-3.3.17.zip `
       -ExpectedSourceVersion 3.3.15 -ServerHost cu-fcchat.com `
       -KeyPath $HOME\.ssh\cu-fcchat-prod
 
 .EXAMPLE
-    .\upgrade-unified.ps1 -Target Remote -ServerHost cu-fcchat.com `
+    .\upgrade.ps1 -Target Remote -ServerHost cu-fcchat.com `
       -KeyPath $HOME\.ssh\cu-fcchat-prod `
       -Rollback /root/phpbb_upgrade_backup_20260808_235900 -DryRun
 
 .EXAMPLE
-    .\upgrade-unified.ps1 -Target Remote -ServerHost cu-fcchat.com `
+    .\upgrade.ps1 -Target Remote -ServerHost cu-fcchat.com `
       -KeyPath $HOME\.ssh\cu-fcchat-prod `
       -Rollback /root/phpbb_upgrade_backup_20260808_235900
 #>
@@ -149,6 +149,9 @@ function Get-SelectedPackage {
 function Get-PackageVersionFromName {
     param([string]$Path)
     $name = [System.IO.Path]::GetFileName($Path)
+    # This workflow has been validated for the phpBB 3.3.x branch.
+    # Major-version upgrades (for example phpBB 4.x) must be reviewed against
+    # phpBB's official migration procedure and explicitly enabled here.
     if ($name -notmatch '^phpBB-(3\.3\.[0-9]+(?:-[A-Za-z0-9._-]+)?)\.zip$') {
         Fail "Package filename must look like phpBB-3.3.x.zip. Got: $name"
     }
