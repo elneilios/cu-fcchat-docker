@@ -1,5 +1,17 @@
+# Keep text files consistently LF in this Linux/Docker-oriented repo
+* text=auto eol=lf
+
+# Binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.zip binary
 # Track SQL files with Git LFS for efficient handling of large database dumps
 *.sql filter=lfs diff=lfs merge=lfs -text
 *.sql.gz filter=lfs diff=lfs merge=lfs -text
+# db_init contains source-controlled SQL scripts, not database dumps
+/db_init/*.sql !filter !diff !merge text eol=lf
 phpbb/colu/installf/schemas/*.sql !text !filter !merge !diff
 phpbb/installf/schemas/*.sql !text !filter !merge !diff
